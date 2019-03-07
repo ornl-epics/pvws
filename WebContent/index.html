@@ -3,8 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <title>PV Web Socket</title>
+<script type="text/javascript" src="js/jquery-3.3.1.js"></script>
+<script type="text/javascript" src="js/pvws.js"></script>
 </head>
 <body>
+
+<blockquote>
+<h1>PV Web Socket</h1>
 
 <form>
   <input type="text" id="text">
@@ -14,40 +19,25 @@
 
 <textarea id="response" rows="5" cols="30"></textarea>
 
+</blockquote>
+
 <script type="text/javascript">
-var text = document.getElementById("text");
+let text = document.getElementById("text");
 text.value = "Type message...";
-var response = document.getElementById("response");
+let response = document.getElementById("response");
 
-var socket;
-
-function openSocket()
-{
-	socket = new WebSocket("ws://localhost:8080/pvws/pv")
-	socket.onopen = message => console.log("Connected");
-	socket.onmessage = message => response.value += message.data;
-	socket.onclose = message => handleClose();
-	socket.onerror = message => console.log(message);
-}
+let pvws = new PVWS("ws://localhost:8080/pvws/pv");
 
 function wsSendMessage()
 {
-	socket.send(JSON.stringify({ name: text.value }));
+    pvws.socket.send(JSON.stringify({ name: text.value }));
 }
 
-function wsCloseConnection()
+jQuery(() =>
 {
-	socket.close();
-}
-
-function handleClose()
-{
-	console.log("Web socket was closed. Scheduling re-connect...");
-	setTimeout(openSocket, 1000);
-}
-
-openSocket();
-
+    console.log("LOADED");
+    pvws.open();
+});
 </script>
 
 </body>
