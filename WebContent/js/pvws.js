@@ -10,18 +10,39 @@ class PVWS
     {
         console.log("Opening " + this.url);
         this.socket = new WebSocket(this.url);
-        this.socket.onopen = message => console.log("Connected to " + this.url);
-        this.socket.onmessage = message => console.log("Received " + message.data);
-        this.socket.onclose = message => this.handleClose();
-        this.socket.onerror = message => console.log("Error: " + message);
+        this.socket.onopen = event => this.handleConnection();
+        this.socket.onmessage = event => this.handleMessage(event.data);
+        this.socket.onclose = event => this.handleClose(event);
+        this.socket.onerror = event => this.handleError(event);
     }
     
-    handleClose()
+    handleConnection()
     {
-        console.log("Web socket was closed: " + this.url);
-        console.log("Scheduling re-connect...");
-        setTimeout(this.open, 1000);
-        console.log("URL: " + this.url);
+        console.log("Connected to " + this.url);
+    }
+    
+    handleMessage(message)
+    {
+        console.log("Received Message: " + message);
+    }
+
+    handleError(event)
+    {
+        console.error("Error from " + this.url);
+        console.error(event);
+        this.close();
+    }
+    
+    handleClose(event)
+    {
+        let message = "Web socket closed (" +  event.code ;
+        if (event.reason)
+            message += ", " + event.reason;
+        message += ")";
+        console.log(message);
+        console.log("Scheduling re-connect to " +
+                    this.url + " in " + this.reconnect_ms + "ms");
+        setTimeout(() => this.open(), this.reconnect_ms);
     }
     
     close()
@@ -30,3 +51,5 @@ class PVWS
     }
 }
 
+// TODO Larger timeout for production setup
+PVWS.prototype.reconnect_ms = 1000;
