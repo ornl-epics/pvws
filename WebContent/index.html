@@ -10,22 +10,17 @@
 <body>
 
 <blockquote>
+
 <h1>PV Web Socket</h1>
-
-<form>
-  <input type="text" id="text">
-  <input type="button" onclick="wsSendMessage();" value="Send">
-  <input type="button" value="Disconnect">
-</form>
-
-<textarea id="response" rows="5" cols="30"></textarea>
-
+<p>
+Web socket: <span id="url">ws://...</span> <img id="status" alt="Status" src="img/disconnected.png">
+<input type="button" value="Disconnect">
+</p>
 
 
 <h3>Ping</h3>
-
 <p>
-Sending a 'ping' message requests the server to 'ping' this client,
+A 'ping' message requests the server to 'ping' this client,
 and a proper web client is supposed to automatically return a 'pong'
 to the server.
 (Internal test mechanism)
@@ -33,19 +28,33 @@ to the server.
 <pre>
 { "type": "ping" }
 </pre>
+<input type="button" value="Ping">
+
+
+<h3>Echo</h3>
+<p>
+An 'echo' JSON message is simply returned.
+</p>
+<pre>
+{ "type": "echo", "body": "Hello, echo", "other": "Whatever else" }
+</pre>
 <form>
-  <input type="button" value="Ping">
+  <input type="text" id="text" size="40" value="Type...">
+  <input type="button" value="Echo">
 </form>
 
 
 <h3>Subscribe to PVs</h3>
-
-<p>A 'subscribe' JSON message requests updates for one or more PVs.</p>
+<p>
+A 'subscribe' JSON message requests updates for one or more PVs.
+</p>
 <pre>
 { "type": "subscribe", "pvs": [ "sim://sine", "loc://x(4)" ] }
 </pre>
 
-<p>A 'clear' JSON message cancels updates for one or more PVs.</p>
+<p>
+A 'clear' JSON message cancels updates for one or more PVs.
+</p>
 <pre>
 { "type": "clear", "pvs": [ "sim://sine", "loc://x(4)" ] }
 </pre>
@@ -53,34 +62,53 @@ to the server.
   <input type="text" id="pv_name" size="40" value="sim://sine">
   <br>
   <input type="button" value="Subscribe">
-  <input type="button" value="Clear">
+  <input type="button" value="UnSubscribe">
 </form>
+
+
+<h3>List</h3>
+<p>
+A 'list' JSON message requests a list of PVs.
+</p>
+<pre>
+{ "type": "list" }
+</pre>
+<input type="button" value="List">
+
+<h3>Messages</h3>
+
+<textarea id="messages" rows="20" cols="50"></textarea>
+  <input type="button" value="Clear">
 
 
 </blockquote>
 
 <script type="text/javascript">
-let text = document.getElementById("text");
-text.value = "Type message...";
-let response = document.getElementById("response");
+let pvws = new PVWS("ws://localhost:8080/pvws/pv",
+    connected =>
+	{
+	    if (connected)
+	        jQuery("#url").html(pvws.url);
+	    else
+	        jQuery("#messages").val("");
+	    jQuery("#status").attr("src", connected ? "img/connected.png" : "img/disconnected.png");
+    },
+    message =>
+    {
+        let resp = jQuery("#messages");
+        resp.val(resp.val() + JSON.stringify(message, null, 2));
+    });
 
-let pvws = new PVWS("ws://localhost:8080/pvws/pv");
+jQuery("input[type=button][value=Disconnect]") .click(() => pvws.close() );
+jQuery("input[type=button][value=Ping]")       .click(() => pvws.ping() );
+jQuery("input[type=button][value=Subscribe]")  .click(() => pvws.subscribe(jQuery("#pv_name").val()) );
+jQuery("input[type=button][value=UnSubscribe]").click(() => pvws.clear(jQuery("#pv_name").val()) );
+jQuery("input[type=button][value=List]")       .click(() => pvws.list() );
+jQuery("input[type=button][value=Echo]")       .click(() =>
+       pvws.socket.send(JSON.stringify({ type: 'echo', body: jQuery("#text").val() })));
+jQuery("input[type=button][value=Clear]")      .click(() => jQuery("#messages").val("") );
 
-function wsSendMessage()
-{
-    pvws.socket.send(JSON.stringify({ type: 'echo', body: text.value }));
-}
-
-jQuery("input[value=Ping]").      click(() =>  pvws.ping() );
-jQuery("input[value=Subscribe]"). click(() =>  pvws.subscribe(jQuery("#pv_name").val()) );
-jQuery("input[value=Clear]")     .click(() =>  pvws.clear(jQuery("#pv_name").val()) );
-jQuery("input[value=Disconnect]").click(() =>  pvws.close() );
-
-jQuery(() =>
-{
-    console.log("LOADED");
-    pvws.open();
-});
+jQuery(() => pvws.open());
 </script>
 
 </body>

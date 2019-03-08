@@ -6,6 +6,7 @@
  ******************************************************************************/
 package pvws.ws;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -25,6 +26,7 @@ import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,7 +38,10 @@ public class WebSocket
 {
 	public static final Logger logger = Logger.getLogger(WebSocket.class.getPackage().getName());
 
-	private static final JsonFactory fs = new JsonFactory();
+	private static final JsonFactory json_factory = new JsonFactory();
+
+	// TODO Other concurrent struct?
+	private final List<WebSocketPV> pvs = new ArrayList<>();
 
 	// TODO SessionManager:
 	// Track all sessions: active? PVs?
@@ -79,13 +84,14 @@ public class WebSocket
 	public void onMessage(final String message, final Session session)
 	{
 		ActivePVEndpoints.trackUpdate(session);
-		logger.log(Level.FINER, "Received: " + message);
+		logger.log(Level.FINER, "Received: " + message + " on " + Thread.currentThread());
 
 		try
 		{
 			final Basic remote = session.getBasicRemote();
 
-			final JsonNode json = new ObjectMapper(fs).readTree(message);
+			final ObjectMapper mapper = new ObjectMapper(json_factory);
+            final JsonNode json = mapper.readTree(message);
 			final JsonNode node = json.path("type");
 			if (node.isMissingNode())
 			    throw new Exception("Missing 'type' in " + message);
@@ -99,6 +105,8 @@ public class WebSocket
                 {
                     // TODO
                     System.out.println("Subscribe to " + pv);
+                    pvs.add(new WebSocketPV(pv));
+                    System.out.println("PVs: " + pvs);
                 }
                 break;
             case "clear":
@@ -106,6 +114,23 @@ public class WebSocket
                 {
                     // TODO
                     System.out.println("Clear " + pv);
+                    pvs.removeIf(known -> known.getName().equals(pv));
+                    System.out.println("PVs: " + pvs);
+                }
+                break;
+            case "list":
+                {
+                    final ByteArrayOutputStream buf = new ByteArrayOutputStream();
+                    final JsonGenerator g = json_factory.createGenerator(buf);
+                    g.writeStartObject();
+                    g.writeStringField("type", "list");
+                    g.writeArrayFieldStart("pvs");
+                    for (final WebSocketPV pv : pvs)
+                        g.writeString(pv.getName());
+                    g.writeEndArray();
+                    g.writeEndObject();
+                    g.flush();
+                    remote.sendText(buf.toString());
                 }
                 break;
             case "ping":
