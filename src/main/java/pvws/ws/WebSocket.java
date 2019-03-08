@@ -1,6 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2019 Oak Ridge National Laboratory.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the LICENSE
+ * which accompanies this distribution
+ ******************************************************************************/
 package pvws.ws;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,9 +23,12 @@ import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+/** Web socket for PV subscriptions
+ *  @author Kay Kasemir
+ */
 @ServerEndpoint(value="/pv")
 public class WebSocket
 {
@@ -51,7 +61,6 @@ public class WebSocket
 		ActivePVEndpoints.trackUpdate(session);
 	}
 
-	// @PathParam("some-id")
 	@OnMessage
 	public void onMessage(final String message, final Session session)
 	{
@@ -61,25 +70,38 @@ public class WebSocket
 		try
 		{
 			final Basic remote = session.getBasicRemote();
-			remote.sendText("Got your message...\n");
 
-			final JsonParser jp = fs.createParser(message);
-			if (jp.nextToken() != JsonToken.START_OBJECT)
-				throw new Exception("Expected JSON, got " + message);
-			while (jp.nextToken() != JsonToken.END_OBJECT)
-			{
-				final String field = jp.getCurrentName();
-				jp.nextToken();
-				if ("name".equals(field))
-				{
-					final String name = jp.getText();
-					remote.sendText("Hello, " + name + "\n");
-				}
-				else
-					logger.log(Level.WARNING, "Ignoring " + field + " in " + message);
-			}
-
-			remote.sendPing(ByteBuffer.allocate(0));
+			final JsonNode json = new ObjectMapper(fs).readTree(message);
+			JsonNode node = json.path("type");
+			if (node.isMissingNode())
+			    throw new Exception("Missing 'type' in " + message);
+	        final String type = node.asText();
+            switch (type)
+            {
+            // Support 'monitor' for compatibility with epics2web
+            case "monitor":
+            case "subscribe":
+                node = json.path("pvs");
+                if (node.isMissingNode())
+                    throw new Exception("Missing 'pvs' in " + message);
+                final Iterator<JsonNode> nodes = node.elements();
+                while (nodes.hasNext())
+                {
+                    final String pv = nodes.next().asText();
+                    // TODO
+                    System.out.println("Subscribe to " + pv);
+                }
+                break;
+            case "ping":
+                logger.log(Level.FINER, "Sending ping...");
+                remote.sendPing(ByteBuffer.allocate(0));
+                break;
+            case "echo":
+                remote.sendText(message);
+                break;
+            default:
+                logger.log(Level.WARNING, "Unknown message type: " + message);
+            }
 		}
 		catch (final Exception ex)
 		{

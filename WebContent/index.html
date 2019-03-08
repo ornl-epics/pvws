@@ -19,6 +19,37 @@
 
 <textarea id="response" rows="5" cols="30"></textarea>
 
+
+
+<h3>Ping</h3>
+
+<p>
+Sending a 'ping' message requests the server to 'ping' this client,
+and a proper web client is supposed to automatically return a 'pong'
+to the server.
+(Internal test mechanism)
+</p>
+<pre>
+{ "type": "ping" }
+</pre>
+<form>
+  <input type="button" onclick="pvws.ping();" value="Ping">
+</form>
+
+
+<h3>Subscribing to PVs</h3>
+
+<p>To subscribe to one or more PVs, send a JSON message</p>
+<pre>
+{ "type": "subscribe", "pvs": [ "sim://sine", "loc://x(4)" ] }
+</pre>
+
+<form>
+  <input type="text" id="pv_name" size="40" value="sim://sine">
+  <input type="button" onclick="subscribe();" value="Subscribe">
+</form>
+
+
 </blockquote>
 
 <script type="text/javascript">
@@ -31,6 +62,11 @@ let pvws = new PVWS("ws://localhost:8080/pvws/pv");
 function wsSendMessage()
 {
     pvws.socket.send(JSON.stringify({ name: text.value }));
+}
+
+function subscribe()
+{
+    pvws.subscribe(jQuery("#pv_name").val());
 }
 
 function wsCloseConnection()
