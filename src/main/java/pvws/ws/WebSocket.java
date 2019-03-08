@@ -6,6 +6,9 @@
  ******************************************************************************/
 package pvws.ws;
 
+import static pvws.PVWebSocketContext.json_factory;
+import static pvws.PVWebSocketContext.logger;
+
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -13,7 +16,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.websocket.CloseReason;
 import javax.websocket.EndpointConfig;
@@ -26,7 +28,6 @@ import javax.websocket.RemoteEndpoint.Basic;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,12 +38,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @ServerEndpoint(value="/pv")
 public class WebSocket
 {
-	public static final Logger logger = Logger.getLogger(WebSocket.class.getPackage().getName());
-
-	private static final JsonFactory json_factory = new JsonFactory();
-
 	// TODO Other concurrent struct?
-	private final  ConcurrentLinkedQueue<WebSocketPV> pvs = new ConcurrentLinkedQueue<>();
+	private final ConcurrentLinkedQueue<WebSocketPV> pvs = new ConcurrentLinkedQueue<>();
 
 	// TODO SessionManager:
 	// Track all sessions: active? PVs?
@@ -51,7 +48,7 @@ public class WebSocket
 	@OnOpen
 	public void onOpen(final Session session, final EndpointConfig config)
 	{
-		logger.log(Level.FINE, "Opening web socket");
+		logger.log(Level.FINE, "Opening web socket " + session.getRequestURI() + " ID " + session.getId());
 		ActivePVEndpoints.trackUpdate(session);
 	}
 
