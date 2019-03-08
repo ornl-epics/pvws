@@ -7,7 +7,9 @@
 package pvws.ws;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -61,6 +63,18 @@ public class WebSocket
 		ActivePVEndpoints.trackUpdate(session);
 	}
 
+	private List<String> getPVs(final String message, final JsonNode json) throws Exception
+	{
+	    final JsonNode node = json.path("pvs");
+        if (node.isMissingNode())
+            throw new Exception("Missing 'pvs' in " + message);
+        final Iterator<JsonNode> nodes = node.elements();
+        final List<String> pvs = new ArrayList<String>();
+        while (nodes.hasNext())
+            pvs.add(nodes.next().asText());
+        return pvs;
+	}
+
 	@OnMessage
 	public void onMessage(final String message, final Session session)
 	{
@@ -72,7 +86,7 @@ public class WebSocket
 			final Basic remote = session.getBasicRemote();
 
 			final JsonNode json = new ObjectMapper(fs).readTree(message);
-			JsonNode node = json.path("type");
+			final JsonNode node = json.path("type");
 			if (node.isMissingNode())
 			    throw new Exception("Missing 'type' in " + message);
 	        final String type = node.asText();
@@ -81,15 +95,17 @@ public class WebSocket
             // Support 'monitor' for compatibility with epics2web
             case "monitor":
             case "subscribe":
-                node = json.path("pvs");
-                if (node.isMissingNode())
-                    throw new Exception("Missing 'pvs' in " + message);
-                final Iterator<JsonNode> nodes = node.elements();
-                while (nodes.hasNext())
+                for (final String pv : getPVs(message, json))
                 {
-                    final String pv = nodes.next().asText();
                     // TODO
                     System.out.println("Subscribe to " + pv);
+                }
+                break;
+            case "clear":
+                for (final String pv : getPVs(message, json))
+                {
+                    // TODO
+                    System.out.println("Clear " + pv);
                 }
                 break;
             case "ping":

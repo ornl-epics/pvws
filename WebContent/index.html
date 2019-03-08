@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>PV Web Socket</title>
+<link rel="stylesheet" type="text/css" href="css/pvws.css">
 <script type="text/javascript" src="js/jquery-3.3.1.js"></script>
 <script type="text/javascript" src="js/pvws.js"></script>
 </head>
@@ -14,7 +15,7 @@
 <form>
   <input type="text" id="text">
   <input type="button" onclick="wsSendMessage();" value="Send">
-  <input type="button" onclick="wsCloseConnection();" value="Disconnect">
+  <input type="button" value="Disconnect">
 </form>
 
 <textarea id="response" rows="5" cols="30"></textarea>
@@ -33,20 +34,26 @@ to the server.
 { "type": "ping" }
 </pre>
 <form>
-  <input type="button" onclick="pvws.ping();" value="Ping">
+  <input type="button" value="Ping">
 </form>
 
 
-<h3>Subscribing to PVs</h3>
+<h3>Subscribe to PVs</h3>
 
-<p>To subscribe to one or more PVs, send a JSON message</p>
+<p>A 'subscribe' JSON message requests updates for one or more PVs.</p>
 <pre>
 { "type": "subscribe", "pvs": [ "sim://sine", "loc://x(4)" ] }
 </pre>
 
+<p>A 'clear' JSON message cancels updates for one or more PVs.</p>
+<pre>
+{ "type": "clear", "pvs": [ "sim://sine", "loc://x(4)" ] }
+</pre>
 <form>
   <input type="text" id="pv_name" size="40" value="sim://sine">
-  <input type="button" onclick="subscribe();" value="Subscribe">
+  <br>
+  <input type="button" value="Subscribe">
+  <input type="button" value="Clear">
 </form>
 
 
@@ -61,18 +68,13 @@ let pvws = new PVWS("ws://localhost:8080/pvws/pv");
 
 function wsSendMessage()
 {
-    pvws.socket.send(JSON.stringify({ name: text.value }));
+    pvws.socket.send(JSON.stringify({ type: 'echo', body: text.value }));
 }
 
-function subscribe()
-{
-    pvws.subscribe(jQuery("#pv_name").val());
-}
-
-function wsCloseConnection()
-{
-    pvws.close();
-}
+jQuery("input[value=Ping]").      click(() =>  pvws.ping() );
+jQuery("input[value=Subscribe]"). click(() =>  pvws.subscribe(jQuery("#pv_name").val()) );
+jQuery("input[value=Clear]")     .click(() =>  pvws.clear(jQuery("#pv_name").val()) );
+jQuery("input[value=Disconnect]").click(() =>  pvws.close() );
 
 jQuery(() =>
 {

@@ -59,7 +59,10 @@ class PVWS
         this.socket.close();
     }
 
-    /**  */
+    /** Ask server to ping this web socket,
+     *  whereupon most web clients would then reply with a 'pong'
+     *  back to the server.
+     */
     ping()
     {
         this.socket.send(JSON.stringify({ type: "ping" }))
@@ -74,6 +77,17 @@ class PVWS
             pvs = [ pvs ];
         // TODO Remember all PVs so we can re-subscribe after close/re-open
         this.socket.send(JSON.stringify({ type: "subscribe", pvs: pvs }))
+    }
+
+    /** Subscribe to one or more PVs
+     *  @param pvs PV name or array of PV names
+     */
+    clear(pvs)
+    {
+        if (pvs.constructor !== Array)
+            pvs = [ pvs ];
+        // TODO Forget PVs so we don't re-subscribe after close/re-open
+        this.socket.send(JSON.stringify({ type: "clear", pvs: pvs }))
     }
 }
 
