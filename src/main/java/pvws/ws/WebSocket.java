@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,7 +42,7 @@ public class WebSocket
 	private static final JsonFactory json_factory = new JsonFactory();
 
 	// TODO Other concurrent struct?
-	private final List<WebSocketPV> pvs = new ArrayList<>();
+	private final  ConcurrentLinkedQueue<WebSocketPV> pvs = new ConcurrentLinkedQueue<>();
 
 	// TODO SessionManager:
 	// Track all sessions: active? PVs?
@@ -101,21 +102,28 @@ public class WebSocket
             // Support 'monitor' for compatibility with epics2web
             case "monitor":
             case "subscribe":
-                for (final String pv : getPVs(message, json))
+                for (final String name : getPVs(message, json))
                 {
-                    // TODO
-                    System.out.println("Subscribe to " + pv);
-                    pvs.add(new WebSocketPV(pv));
-                    System.out.println("PVs: " + pvs);
+                    logger.log(Level.FINER, "Subscribe to " + name);
+                    final WebSocketPV pv = new WebSocketPV(name);
+                    pv.start();
+                    pvs.add(pv);
                 }
                 break;
             case "clear":
-                for (final String pv : getPVs(message, json))
+                for (final String name : getPVs(message, json))
                 {
-                    // TODO
-                    System.out.println("Clear " + pv);
-                    pvs.removeIf(known -> known.getName().equals(pv));
-                    System.out.println("PVs: " + pvs);
+                    logger.log(Level.FINER, "Clear " + name);
+                    final Iterator<WebSocketPV> iter = pvs.iterator();
+                    while (iter.hasNext())
+                    {
+                        final WebSocketPV pv = iter.next();
+                        if (pv.getName().equals(name))
+                        {
+                            pv.dispose();
+                            iter.remove();
+                        }
+                    }
                 }
                 break;
             case "list":
@@ -141,18 +149,18 @@ public class WebSocket
                 remote.sendText(message);
                 break;
             default:
-                logger.log(Level.WARNING, "Unknown message type: " + message);
+                throw new Exception("Unknown message type: " + message);
             }
 		}
 		catch (final Exception ex)
 		{
-			ex.printStackTrace();
+            logger.log(Level.WARNING, "Message error", ex);
 		}
 	}
 
 	@OnError
 	public void onError(final Throwable ex)
 	{
-		ex.printStackTrace();
+        logger.log(Level.WARNING, "Web Socket error", ex);
 	}
 }
