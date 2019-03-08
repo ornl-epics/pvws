@@ -8,6 +8,7 @@ class PVWS
 
     open()
     {
+        console.log("Opening " + this.url);
         this.socket = new WebSocket(this.url);
         this.socket.onopen = message => console.log("Connected to " + this.url);
         this.socket.onmessage = message => console.log("Received " + message.data);
@@ -20,6 +21,7 @@ class PVWS
         console.log("Web socket was closed: " + this.url);
         console.log("Scheduling re-connect...");
         setTimeout(this.open, 1000);
+        console.log("URL: " + this.url);
     }
     
     close()

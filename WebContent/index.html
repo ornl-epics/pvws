@@ -33,6 +33,11 @@ function wsSendMessage()
     pvws.socket.send(JSON.stringify({ name: text.value }));
 }
 
+function wsCloseConnection()
+{
+    pvws.close();
+}
+
 jQuery(() =>
 {
     console.log("LOADED");
