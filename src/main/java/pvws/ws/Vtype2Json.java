@@ -13,6 +13,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
 import org.epics.vtype.VDouble;
+import org.epics.vtype.VEnum;
 import org.epics.vtype.VFloat;
 import org.epics.vtype.VNumber;
 import org.epics.vtype.VString;
@@ -36,7 +37,13 @@ public class Vtype2Json
             toJson(g, (VNumber) value, complete);
         else if (value instanceof VString)
             toJson(g, (VString) value);
-        // TODO Many more types
+        else if (value instanceof VEnum)
+            toJson(g, (VEnum) value, complete);
+        else
+        {
+            // TODO Many more types
+            g.writeStringField("value", value.toString());
+        }
 
         g.writeEndObject();
         g.flush();
@@ -71,5 +78,19 @@ public class Vtype2Json
         }
         else
             g.writeNumberField("value", value.getValue().longValue());
+    }
+
+    private static void toJson(final JsonGenerator g, final VEnum value, final boolean complete) throws Exception
+    {
+        if (complete)
+        {
+            g.writeArrayFieldStart("labels");
+            for (final String label : value.getDisplay().getChoices())
+                g.writeString(label);
+            g.writeEndArray();
+        }
+        g.writeStringField("severity", value.getAlarm().getSeverity().name());
+        g.writeNumberField("value",  value.getIndex());
+        g.writeStringField("text",  value.getValue());
     }
 }
