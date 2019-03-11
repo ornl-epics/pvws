@@ -6,6 +6,9 @@
  ******************************************************************************/
 package pvws;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,6 +35,12 @@ public class PVWebSocketContext implements ServletContextListener
 
     public static final JsonFactory json_factory = new JsonFactory();
 
+    private static final Set<WebSocket> sockets = Collections.newSetFromMap(new ConcurrentHashMap<WebSocket, Boolean>());
+
+    public static void register(final WebSocket socket)
+    {
+        sockets.add(socket);
+    }
 
     @Override
     public void contextInitialized(final ServletContextEvent ev)
@@ -49,13 +58,18 @@ public class PVWebSocketContext implements ServletContextListener
     {
         final ServletContext context = ev.getServletContext();
 
-        // Close all PVs
-        // TODO dispose all subscriptions, i.e. ask all web sockets to close down
-        for (final ReferencedEntry<PV> ref : PVPool.getPVReferences())
-        {
-            logger.log(Level.FINE, "Releasing " + ref.getEntry().getName());
-            PVPool.releasePV(ref.getEntry());
-        }
+
+        // Dispose all web sockets, i.e. close all PVs
+        for (final WebSocket socket : sockets)
+            socket.dispose();
+        sockets.clear();
+
+        if (! PVPool.getPVReferences().isEmpty())
+            for (final ReferencedEntry<PV> ref : PVPool.getPVReferences())
+            {
+                logger.log(Level.WARNING, "Unrelease PV " + ref.getEntry().getName());
+                PVPool.releasePV(ref.getEntry());
+            }
 
         logger.log(Level.INFO, "===========================================");
         logger.log(Level.INFO, context.getContextPath() + " shut down");

@@ -34,6 +34,14 @@ class PVWS
     handleMessage(message)
     {
         console.log("Received Message: " + message);
+        
+        
+        // TODO If it's a value update, use
+        // Object.assign(value, update)
+        // to merge new data into the existing value
+        
+
+        
         this.message_handler(JSON.parse(message));
     }
 

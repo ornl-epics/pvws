@@ -20,7 +20,8 @@ import io.reactivex.disposables.Disposable;
 public class WebSocketPV
 {
     private final String name;
-    private Disposable subscription;
+    private volatile PV pv;
+    private volatile Disposable subscription;
 
     public WebSocketPV(final String name)
     {
@@ -34,7 +35,7 @@ public class WebSocketPV
 
     public void start() throws Exception
     {
-        final PV pv = PVPool.getPV(name);
+        pv = PVPool.getPV(name);
         subscription = pv.onValueEvent()
                          .throttleLatest(1000, TimeUnit.MILLISECONDS)
                          .subscribe(this::handleUpdates);
@@ -43,12 +44,15 @@ public class WebSocketPV
     private void handleUpdates(final VType value)
     {
         // TODO Send data to web socket client
-        System.out.println(name + " = " + value);
+        System.out.println("TODO: Send to web client " + name + " = " + value);
     }
 
     public void dispose()
     {
         subscription.dispose();
+        subscription = null;
+        PVPool.releasePV(pv);
+        pv = null;
     }
 
     @Override

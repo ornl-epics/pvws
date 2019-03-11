@@ -32,38 +32,54 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import pvws.PVWebSocketContext;
+
 /** Web socket for PV subscriptions
  *  @author Kay Kasemir
  */
 @ServerEndpoint(value="/pv")
 public class WebSocket
 {
+    /** Track when the last message was received by web client */
+    private volatile long last_client_message = 0;
+
 	// TODO Other concurrent struct?
 	private final ConcurrentLinkedQueue<WebSocketPV> pvs = new ConcurrentLinkedQueue<>();
 
+	public WebSocket()
+	{
+	    // Constructor, register with PVWebSocketContext
+	    PVWebSocketContext.register(this);
+	}
+
+	private void trackClientUpdate()
+	{
+	    last_client_message = System.currentTimeMillis();
+	}
+
 	// TODO SessionManager:
-	// Track all sessions: active? PVs?
 	// Periodically 'ping'
 	// Track time of last interaction
 	@OnOpen
 	public void onOpen(final Session session, final EndpointConfig config)
 	{
 		logger.log(Level.FINE, "Opening web socket " + session.getRequestURI() + " ID " + session.getId());
-		ActivePVEndpoints.trackUpdate(session);
+		trackClientUpdate();
 	}
 
 	@OnClose
 	public void onClose(final Session session, final CloseReason reason)
 	{
+	    dispose();
 		logger.log(Level.FINE, "Web socket closed");
-		ActivePVEndpoints.close(session);
+		last_client_message = 0;
 	}
 
 	@OnMessage
 	public void onPong(final PongMessage message, final Session session)
 	{
 		logger.log(Level.FINER, "Got pong");
-		ActivePVEndpoints.trackUpdate(session);
+		trackClientUpdate();
 	}
 
 	private List<String> getPVs(final String message, final JsonNode json) throws Exception
@@ -81,7 +97,7 @@ public class WebSocket
 	@OnMessage
 	public void onMessage(final String message, final Session session)
 	{
-		ActivePVEndpoints.trackUpdate(session);
+	    trackClientUpdate();
 		logger.log(Level.FINER, "Received: " + message + " on " + Thread.currentThread());
 
 		try
@@ -159,5 +175,24 @@ public class WebSocket
 	public void onError(final Throwable ex)
 	{
         logger.log(Level.WARNING, "Web Socket error", ex);
+	}
+
+	/** Clears all PVs
+	 *
+	 *  <p>Web socket calls this onClose(),
+	 *  but context may also call this again just in case
+	 */
+	public void dispose()
+	{
+	    if (! pvs.isEmpty())
+	    {
+            logger.log(Level.INFO, "Disposing web socket PVs:");
+            for (final WebSocketPV pv : pvs)
+            {
+                logger.log(Level.INFO, "Closing " + pv);
+                pv.dispose();
+            }
+            pvs.clear();
+	    }
 	}
 }
