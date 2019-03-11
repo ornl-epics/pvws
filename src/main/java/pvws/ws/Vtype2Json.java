@@ -9,6 +9,8 @@ package pvws.ws;
 import static pvws.PVWebSocketContext.json_factory;
 
 import java.io.ByteArrayOutputStream;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
 import org.epics.vtype.VDouble;
 import org.epics.vtype.VFloat;
@@ -51,8 +53,12 @@ public class Vtype2Json
     {
         if (complete)
         {
-            // TODO Precision
             g.writeStringField("units", value.getDisplay().getUnit());
+
+            final NumberFormat format =  value.getDisplay().getFormat();
+            if (format instanceof DecimalFormat)
+                g.writeNumberField("precision", ((DecimalFormat) format).getMaximumFractionDigits());
+
         }
         g.writeStringField("severity", value.getAlarm().getSeverity().name());
         if (value instanceof VDouble  ||  value instanceof VFloat)
