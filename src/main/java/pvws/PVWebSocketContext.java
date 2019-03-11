@@ -37,11 +37,6 @@ public class PVWebSocketContext implements ServletContextListener
 
     private static final Set<WebSocket> sockets = Collections.newSetFromMap(new ConcurrentHashMap<WebSocket, Boolean>());
 
-    public static void register(final WebSocket socket)
-    {
-        sockets.add(socket);
-    }
-
     @Override
     public void contextInitialized(final ServletContextEvent ev)
     {
@@ -53,16 +48,31 @@ public class PVWebSocketContext implements ServletContextListener
 
     }
 
+    /** @param socket {@link WebSocket} to track */
+    public static void register(final WebSocket socket)
+    {
+        sockets.add(socket);
+    }
+
+    /** @param socket {@link WebSocket} to track no more */
+    public static void unregister(final WebSocket socket)
+    {
+        sockets.remove(socket);
+    }
+
     @Override
     public void contextDestroyed(final ServletContextEvent ev)
     {
         final ServletContext context = ev.getServletContext();
 
-        // Dispose all web sockets, i.e. close all PVs
-        for (final WebSocket socket : sockets)
-            socket.dispose();
-        sockets.clear();
-
+        // Dispose all web sockets that did not self-close
+        if (! sockets.isEmpty())
+        {
+            logger.log(Level.INFO, "Web sockets that did not close/unregister:");
+            for (final WebSocket socket : sockets)
+                socket.dispose();
+            sockets.clear();
+        }
         if (! PVPool.getPVReferences().isEmpty())
             for (final ReferencedEntry<PV> ref : PVPool.getPVReferences())
             {

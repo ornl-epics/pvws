@@ -15,38 +15,52 @@ import org.phoebus.pv.PVPool;
 import io.reactivex.disposables.Disposable;
 
 /** Web socket PV
+ *
+ *  <p>Connects to {@link PV}, updates {@link WebSocket}
+ *
  *  @author Kay Kasemir
  */
 public class WebSocketPV
 {
+    private static final int THROTTLE_MS = 1000;
     private final String name;
+    private final WebSocket socket;
     private volatile PV pv;
     private volatile Disposable subscription;
 
-    public WebSocketPV(final String name)
+    /** @param name PV name
+     *  @param socket Socket to notify about value updates
+     */
+    public WebSocketPV(final String name, final WebSocket socket)
     {
         this.name = name;
+        this.socket = socket;
     }
 
+    /** @return PV name */
     public String getName()
     {
         return name;
     }
 
+    /** Start PV
+     *  @throws Exception on error
+     *  @see #dispose()
+     */
     public void start() throws Exception
     {
         pv = PVPool.getPV(name);
         subscription = pv.onValueEvent()
-                         .throttleLatest(1000, TimeUnit.MILLISECONDS)
+                         .throttleLatest(THROTTLE_MS, TimeUnit.MILLISECONDS)
                          .subscribe(this::handleUpdates);
     }
 
     private void handleUpdates(final VType value)
     {
-        // TODO Send data to web socket client
-        System.out.println("TODO: Send to web client " + name + " = " + value);
+        socket.sendUpdate(name, value);
     }
 
+    /** Close PV */
     public void dispose()
     {
         subscription.dispose();

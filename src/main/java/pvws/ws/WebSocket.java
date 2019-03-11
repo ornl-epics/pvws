@@ -28,6 +28,8 @@ import javax.websocket.RemoteEndpoint.Basic;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
+import org.epics.vtype.VType;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +44,8 @@ public class WebSocket
 {
     /** Track when the last message was received by web client */
     private volatile long last_client_message = 0;
+
+    private volatile Session session;
 
 	/** Map of PV name to PV */
 	private final ConcurrentHashMap<String, WebSocketPV> pvs = new ConcurrentHashMap<>();
@@ -64,6 +68,7 @@ public class WebSocket
 	public void onOpen(final Session session, final EndpointConfig config)
 	{
 		logger.log(Level.FINE, "Opening web socket " + session.getRequestURI() + " ID " + session.getId());
+		this.session = session;
 		trackClientUpdate();
 	}
 
@@ -120,7 +125,7 @@ public class WebSocket
                     pvs.computeIfAbsent(name, n ->
                     {
                         logger.log(Level.FINER, "Subscribe to " + name);
-                        final WebSocketPV pv = new WebSocketPV(name);
+                        final WebSocketPV pv = new WebSocketPV(name, this);
                         try
                         {
                             pv.start();
@@ -182,6 +187,32 @@ public class WebSocket
         logger.log(Level.WARNING, "Web Socket error", ex);
 	}
 
+	public void sendUpdate(final String name, final VType value)
+	{
+	    final Session safe_session = session;
+	    try
+	    {
+    	    if (safe_session == null)
+    	        throw new Exception("No session");
+    	    else if (! safe_session.isOpen())
+                throw new Exception("Session closed");
+
+    	    final ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            final JsonGenerator g = json_factory.createGenerator(buf);
+            g.writeStartObject();
+            g.writeStringField("type", "update");
+            g.writeStringField("pv", name);
+            g.writeStringField("value", value.toString());
+            g.writeEndObject();
+            g.flush();
+            safe_session.getBasicRemote().sendText(buf.toString());
+	    }
+	    catch (final Exception ex)
+	    {
+	        logger.log(Level.WARNING, "Cannot cannot send " + name + " = " + value, ex);
+	    }
+	}
+
 	/** Clears all PVs
 	 *
 	 *  <p>Web socket calls this onClose(),
@@ -198,6 +229,7 @@ public class WebSocket
                 pv.dispose();
             }
             pvs.clear();
+            PVWebSocketContext.unregister(this);
 	    }
 	}
 }
