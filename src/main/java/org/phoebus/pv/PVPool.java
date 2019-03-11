@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import org.phoebus.pv.RefCountMap.ReferencedEntry;
+import org.phoebus.pv.ca.JCA_PVFactory;
 import org.phoebus.pv.loc.LocalPVFactory;
 import org.phoebus.pv.sim.SimPVFactory;
 
@@ -68,6 +69,7 @@ public class PVPool
         try
         {
             // Load all PVFactory services
+            factories.put("ca", new JCA_PVFactory());
             factories.put("loc", new LocalPVFactory());
             factories.put("sim", new SimPVFactory());
         }
