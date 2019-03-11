@@ -11,6 +11,10 @@ class PVWS
         this.url = url;
         this.connect_handler = connect_handler;
         this.message_handler = message_handler;
+        
+        // Map of PVs to last known value,
+        // merging metadata and value updates.
+        this.values = {}
     }
 
     /** Open the web socket, i.e. start PV communication */
@@ -33,16 +37,21 @@ class PVWS
     
     handleMessage(message)
     {
-        console.log("Received Message: " + message);
-        
-        
-        // TODO If it's a value update, use
-        // Object.assign(value, update)
-        // to merge new data into the existing value
-        
-
-        
-        this.message_handler(JSON.parse(message));
+        // console.log("Received Message: " + message);
+        let jm = JSON.parse(message);
+        if (jm.type === "update")
+        {
+            // Merge received data with last known value
+            let value = this.values[jm.pv];
+            if (value === undefined)
+                value = {}
+            Object.assign(value, jm);
+            this.values[jm.pv] = value;
+            // console.log("Update for PV " + jm.pv + ": " + JSON.stringify(value));
+            this.message_handler(value);
+        }
+        else
+            this.message_handler(jm);
     }
 
     handleError(event)
