@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
@@ -45,15 +46,75 @@ public class WebSocket
     /** Track when the last message was received by web client */
     private volatile long last_client_message = 0;
 
+    /** Queue of messages for the client.
+     *
+     *  <p>Multiple threads concurrently writing to the socket results in
+     *  IllegalStateException "remote endpoint was in state [TEXT_FULL_WRITING]"
+     *  All writes are thus performed by just one thread off this queue.
+     */
+    private final ArrayBlockingQueue<String> write_queue = new ArrayBlockingQueue<String>(2048);
+
+    /** Thread that writes messages until an {@link #EXIT_MESSAGE} is queued. */
+    private final Thread write_thread;
+    private static final String EXIT_MESSAGE = "EXIT";
+
     private volatile Session session;
 
-	/** Map of PV name to PV */
+    /** Map of PV name to PV */
 	private final ConcurrentHashMap<String, WebSocketPV> pvs = new ConcurrentHashMap<>();
 
 	public WebSocket()
 	{
 	    // Constructor, register with PVWebSocketContext
 	    PVWebSocketContext.register(this);
+
+	    write_thread = new Thread(this::writeQueuedMessages, "Write Thread");
+	    write_thread.setDaemon(true);
+	    write_thread.start();
+	}
+
+	private void queueMessage(final String message)
+	{
+	    if (! write_queue.offer(message))
+	        logger.log(Level.WARNING, "Cannot queue message " + message);
+	}
+
+	private void writeQueuedMessages()
+	{
+	    while (true)
+	    {
+	        final String message;
+	        try
+	        {
+	            message = write_queue.take();
+	        }
+	        catch (final InterruptedException ex)
+	        {
+	            return;
+	        }
+
+	        if (message == EXIT_MESSAGE)
+	        {
+	            logger.log(Level.FINE, "Exiting write thread");
+	            return;
+	        }
+
+	        // Check if we should exit the thread
+	        final Session safe_session = session;
+
+	        try
+	        {
+	            if (safe_session == null)
+	                throw new Exception("No session");
+	            if (! safe_session.isOpen())
+	                throw new Exception("Session closed");
+                safe_session.getBasicRemote().sendText(message);
+            }
+	        catch (final Exception ex)
+	        {
+	            logger.log(Level.WARNING, "Cannot write '" + message + "'", ex);
+            }
+	    }
 	}
 
 	private void trackClientUpdate()
@@ -161,7 +222,7 @@ public class WebSocket
                     g.writeEndArray();
                     g.writeEndObject();
                     g.flush();
-                    remote.sendText(buf.toString());
+                    queueMessage(buf.toString());
                 }
                 break;
             case "ping":
@@ -169,7 +230,7 @@ public class WebSocket
                 remote.sendPing(ByteBuffer.allocate(0));
                 break;
             case "echo":
-                remote.sendText(message);
+                queueMessage(message);
                 break;
             default:
                 throw new Exception("Unknown message type: " + message);
@@ -187,25 +248,15 @@ public class WebSocket
         logger.log(Level.WARNING, "Web Socket error", ex);
 	}
 
-	public void sendUpdate(final String name, final VType value)
+	/** @param name PV name for which to send an update
+	 *  @param value Current value
+	 *  @param initial_value Is this the initial value, i.e. send all metadata?
+	 */
+	public void sendUpdate(final String name, final VType value, final boolean initial_value)
 	{
-	    final Session safe_session = session;
 	    try
 	    {
-    	    if (safe_session == null)
-    	        throw new Exception("No session");
-    	    else if (! safe_session.isOpen())
-                throw new Exception("Session closed");
-
-    	    final ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            final JsonGenerator g = json_factory.createGenerator(buf);
-            g.writeStartObject();
-            g.writeStringField("type", "update");
-            g.writeStringField("pv", name);
-            g.writeStringField("value", value.toString());
-            g.writeEndObject();
-            g.flush();
-            safe_session.getBasicRemote().sendText(buf.toString());
+    	    queueMessage(Vtype2Json.toJson(name, value, initial_value));
 	    }
 	    catch (final Exception ex)
 	    {
@@ -220,16 +271,19 @@ public class WebSocket
 	 */
 	public void dispose()
 	{
+	    // Exit write thread
+	    queueMessage(EXIT_MESSAGE);
 	    if (! pvs.isEmpty())
 	    {
-            logger.log(Level.INFO, "Disposing web socket PVs:");
+            logger.log(Level.FINE, "Disposing web socket PVs:");
             for (final WebSocketPV pv : pvs.values())
             {
-                logger.log(Level.INFO, "Closing " + pv);
+                logger.log(Level.FINE, "Closing " + pv);
                 pv.dispose();
             }
             pvs.clear();
             PVWebSocketContext.unregister(this);
 	    }
+	    session = null;
 	}
 }

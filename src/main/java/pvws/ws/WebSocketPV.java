@@ -27,6 +27,7 @@ public class WebSocketPV
     private final WebSocket socket;
     private volatile PV pv;
     private volatile Disposable subscription;
+    private volatile VType last_value = null;
 
     /** @param name PV name
      *  @param socket Socket to notify about value updates
@@ -57,7 +58,8 @@ public class WebSocketPV
 
     private void handleUpdates(final VType value)
     {
-        socket.sendUpdate(name, value);
+        socket.sendUpdate(name, value, last_value == null);
+        last_value = value;
     }
 
     /** Close PV */
