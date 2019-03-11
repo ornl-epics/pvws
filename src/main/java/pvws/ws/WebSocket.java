@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 import javax.websocket.CloseReason;
@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import pvws.PVWebSocketContext;
 
-/** Web socket for PV subscriptions
+/** Web socket, handles {@link WebSocketPV}s for one web client
  *  @author Kay Kasemir
  */
 @ServerEndpoint(value="/pv")
@@ -43,8 +43,8 @@ public class WebSocket
     /** Track when the last message was received by web client */
     private volatile long last_client_message = 0;
 
-	// TODO Other concurrent struct?
-	private final ConcurrentLinkedQueue<WebSocketPV> pvs = new ConcurrentLinkedQueue<>();
+	/** Map of PV name to PV */
+	private final ConcurrentHashMap<String, WebSocketPV> pvs = new ConcurrentHashMap<>();
 
 	public WebSocket()
 	{
@@ -117,25 +117,30 @@ public class WebSocket
             case "subscribe":
                 for (final String name : getPVs(message, json))
                 {
-                    logger.log(Level.FINER, "Subscribe to " + name);
-                    final WebSocketPV pv = new WebSocketPV(name);
-                    pv.start();
-                    pvs.add(pv);
+                    pvs.computeIfAbsent(name, n ->
+                    {
+                        logger.log(Level.FINER, "Subscribe to " + name);
+                        final WebSocketPV pv = new WebSocketPV(name);
+                        try
+                        {
+                            pv.start();
+                        }
+                        catch (final Exception ex)
+                        {
+                            logger.log(Level.WARNING, "Cannot start PV " + name, ex);
+                        }
+                        return pv;
+                    });
                 }
                 break;
             case "clear":
                 for (final String name : getPVs(message, json))
                 {
-                    logger.log(Level.FINER, "Clear " + name);
-                    final Iterator<WebSocketPV> iter = pvs.iterator();
-                    while (iter.hasNext())
+                    final WebSocketPV pv = pvs.remove(name);
+                    if (pv != null)
                     {
-                        final WebSocketPV pv = iter.next();
-                        if (pv.getName().equals(name))
-                        {
-                            pv.dispose();
-                            iter.remove();
-                        }
+                        logger.log(Level.FINER, "Clear " + name);
+                        pv.dispose();
                     }
                 }
                 break;
@@ -146,7 +151,7 @@ public class WebSocket
                     g.writeStartObject();
                     g.writeStringField("type", "list");
                     g.writeArrayFieldStart("pvs");
-                    for (final WebSocketPV pv : pvs)
+                    for (final WebSocketPV pv : pvs.values())
                         g.writeString(pv.getName());
                     g.writeEndArray();
                     g.writeEndObject();
@@ -187,7 +192,7 @@ public class WebSocket
 	    if (! pvs.isEmpty())
 	    {
             logger.log(Level.INFO, "Disposing web socket PVs:");
-            for (final WebSocketPV pv : pvs)
+            for (final WebSocketPV pv : pvs.values())
             {
                 logger.log(Level.INFO, "Closing " + pv);
                 pv.dispose();

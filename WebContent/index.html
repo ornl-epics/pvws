@@ -96,7 +96,7 @@ let pvws = new PVWS("ws://localhost:8080/pvws/pv",
     message =>
     {
         let resp = jQuery("#messages");
-        resp.val(resp.val() + JSON.stringify(message, null, 2));
+        resp.val(JSON.stringify(message, null, 2));
     });
 
 jQuery("input[type=button][value=Disconnect]") .click(() => pvws.close() );

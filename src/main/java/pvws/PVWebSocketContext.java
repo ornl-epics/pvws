@@ -25,7 +25,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 
 import pvws.ws.WebSocket;
 
-/** Web application context
+/** Web application context, tracks all {@link WebSocket}s
  *  @author Kay Kasemir
  */
 @WebListener
@@ -57,7 +57,6 @@ public class PVWebSocketContext implements ServletContextListener
     public void contextDestroyed(final ServletContextEvent ev)
     {
         final ServletContext context = ev.getServletContext();
-
 
         // Dispose all web sockets, i.e. close all PVs
         for (final WebSocket socket : sockets)
