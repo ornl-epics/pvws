@@ -9,10 +9,13 @@ package pvws.ws;
 import static pvws.PVWebSocketContext.json_factory;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
+import org.epics.util.array.ListByte;
 import org.epics.vtype.AlarmSeverity;
+import org.epics.vtype.VByteArray;
 import org.epics.vtype.VDouble;
 import org.epics.vtype.VEnum;
 import org.epics.vtype.VFloat;
@@ -24,6 +27,9 @@ import com.fasterxml.jackson.core.JsonGenerator;
 
 public class Vtype2Json
 {
+    private static final Charset UTF8 = Charset.forName("UTF-8");
+
+
     public static String toJson(final String name, final VType value, final VType last_value) throws Exception
     {
         final ByteArrayOutputStream buf = new ByteArrayOutputStream();
@@ -33,11 +39,13 @@ public class Vtype2Json
         g.writeStringField("pv", name);
 
         if (value instanceof VNumber)
-            toJson(g, (VNumber) value, last_value);
+            handleNumber(g, (VNumber) value, last_value);
         else if (value instanceof VString)
-            toJson(g, (VString) value);
+            handleString(g, (VString) value, last_value);
         else if (value instanceof VEnum)
-            toJson(g, (VEnum) value, last_value);
+            handleEnum(g, (VEnum) value, last_value);
+        else if (value instanceof VByteArray)
+            handleLongString(g, (VByteArray) value);
         else
         {
             // TODO Many more types
@@ -49,13 +57,41 @@ public class Vtype2Json
         return buf.toString();
     }
 
-    private static void toJson(final JsonGenerator g,  VString value) throws Exception
+
+    private static void handleString(final JsonGenerator g, final VString value, final VType last_value) throws Exception
     {
-        g.writeStringField("severity", value.getAlarm().getSeverity().name());
+        final AlarmSeverity severity = value.getAlarm().getSeverity();
+        if (last_value == null  ||
+            (last_value instanceof VString  &&
+             ((VString) last_value).getAlarm().getSeverity() != severity))
+            g.writeStringField("severity", value.getAlarm().getSeverity().name());
+
         g.writeStringField("text", value.getValue());
     }
 
-    private static void toJson(final JsonGenerator g, final VNumber value, final VType last_value) throws Exception
+
+    private static void handleLongString(final JsonGenerator g, final VByteArray value) throws Exception
+    {
+        g.writeStringField("severity", value.getAlarm().getSeverity().name());
+
+        final ListByte data = value.getData();
+        final byte[] bytes = new byte[data.size()];
+        // Copy bytes until end or '\0'
+        int len = 0;
+        while (len<bytes.length)
+        {
+            final byte b = data.getByte(len);
+            if (b == 0)
+                break;
+            else
+                bytes[len++] = b;
+        }
+        // Use actual 'len', not data.size()
+        g.writeStringField("text", new String(bytes, 0, len, UTF8));
+    }
+
+
+    private static void handleNumber(final JsonGenerator g, final VNumber value, final VType last_value) throws Exception
     {
         final AlarmSeverity severity = value.getAlarm().getSeverity();
         if (last_value == null)
@@ -89,7 +125,8 @@ public class Vtype2Json
             g.writeNumberField("value", value.getValue().longValue());
     }
 
-    private static void toJson(final JsonGenerator g, final VEnum value, final VType last_value) throws Exception
+
+    private static void handleEnum(final JsonGenerator g, final VEnum value, final VType last_value) throws Exception
     {
         final AlarmSeverity severity = value.getAlarm().getSeverity();
         if (last_value == null)
