@@ -84,7 +84,17 @@ A 'list' JSON message requests a list of PVs.
 </blockquote>
 
 <script type="text/javascript">
-let pvws = new PVWS("ws://localhost:8080/pvws/pv",
+let wsurl = window.location.pathname
+wsurl = wsurl.substring(0, wsurl.indexOf("/pvws"))
+wsurl = window.location.host + wsurl + "/pvws/pv"
+if (window.location.protocol == "https:")
+    wsurl = "wss:" + wsurl
+else
+    wsurl = "ws:" + wsurl
+
+jQuery("#url").html(wsurl);
+    
+let pvws = new PVWS(wsurl,
     connected =>
 	{
 	    if (connected)
