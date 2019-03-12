@@ -123,4 +123,4 @@ class PVWS
 }
 
 // TODO Larger timeout for production setup
-PVWS.prototype.reconnect_ms = 1000;
+PVWS.prototype.reconnect_ms = 5000;

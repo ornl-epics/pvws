@@ -58,7 +58,7 @@ public class WebSocketPV
 
     private void handleUpdates(final VType value)
     {
-        socket.sendUpdate(name, value, last_value == null);
+        socket.sendUpdate(name, value, last_value);
         last_value = value;
     }
 

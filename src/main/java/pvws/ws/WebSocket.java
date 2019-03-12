@@ -250,13 +250,13 @@ public class WebSocket
 
 	/** @param name PV name for which to send an update
 	 *  @param value Current value
-	 *  @param initial_value Is this the initial value, i.e. send all metadata?
+	 *  @param last_value Previous value
 	 */
-	public void sendUpdate(final String name, final VType value, final boolean initial_value)
+	public void sendUpdate(final String name, final VType value, final VType last_value)
 	{
 	    try
 	    {
-    	    queueMessage(Vtype2Json.toJson(name, value, initial_value));
+    	    queueMessage(Vtype2Json.toJson(name, value, last_value));
 	    }
 	    catch (final Exception ex)
 	    {
