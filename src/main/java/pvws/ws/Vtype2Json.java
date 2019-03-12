@@ -53,7 +53,7 @@ public class Vtype2Json
     private static void toJson(final JsonGenerator g,  VString value) throws Exception
     {
         g.writeStringField("severity", value.getAlarm().getSeverity().name());
-        g.writeStringField("value", value.getValue());
+        g.writeStringField("text", value.getValue());
     }
 
     private static void toJson(final JsonGenerator g, final VNumber value, final boolean complete) throws Exception
