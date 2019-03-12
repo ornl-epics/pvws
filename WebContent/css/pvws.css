@@ -8,6 +8,11 @@ pre
     background-color: #EEE; 
 }
 
+dt
+{
+	font-style: italic;
+}
+
 #url
 {
 	background-color: #EEE; 

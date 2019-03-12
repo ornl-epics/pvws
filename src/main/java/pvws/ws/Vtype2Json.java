@@ -83,7 +83,7 @@ public class Vtype2Json
             if (Double.isFinite(dbl))
                 g.writeNumberField("value", dbl);
             else
-                g.writeStringField("text", "NaN");
+                g.writeStringField("value", "NaN");
         }
         else
             g.writeNumberField("value", value.getValue().longValue());
