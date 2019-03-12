@@ -88,9 +88,9 @@ let wsurl = window.location.pathname
 wsurl = wsurl.substring(0, wsurl.indexOf("/pvws"))
 wsurl = window.location.host + wsurl + "/pvws/pv"
 if (window.location.protocol == "https:")
-    wsurl = "wss:" + wsurl
+    wsurl = "wss://" + wsurl
 else
-    wsurl = "ws:" + wsurl
+    wsurl = "ws://" + wsurl
 
 jQuery("#url").html(wsurl);
     
