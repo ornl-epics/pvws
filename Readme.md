@@ -14,6 +14,8 @@ Building
 Running under Tomcat
 --------------------
 
+Set environment variable `EPICS_CA_ADDR_LIST`, for example in `$CATALINA_HOME/bin/setenv.sh`.
+
 Place `pvws.war` in `$CATALINA_HOME/webapps`
 
 

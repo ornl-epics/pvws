@@ -12,12 +12,10 @@ import static org.phoebus.pv.PV.logger;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.logging.Level;
 
 import org.phoebus.pv.RefCountMap.ReferencedEntry;
-import org.phoebus.pv.ca.JCA_PVFactory;
-import org.phoebus.pv.loc.LocalPVFactory;
-import org.phoebus.pv.sim.SimPVFactory;
 
 /** Pool of {@link PV}s
  *
@@ -69,9 +67,12 @@ public class PVPool
         try
         {
             // Load all PVFactory services
-            factories.put("ca", new JCA_PVFactory());
-            factories.put("loc", new LocalPVFactory());
-            factories.put("sim", new SimPVFactory());
+            for (final PVFactory factory : ServiceLoader.load(PVFactory.class))
+            {
+                final String type = factory.getType();
+                logger.log(Level.CONFIG, "PV type " + type + ":// provided by " + factory);
+                factories.put(type, factory);
+            }
         }
         catch (final Throwable ex)
         {
