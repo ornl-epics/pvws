@@ -1,6 +1,16 @@
 PV Web Socket
 =============
 
+Web Socket for PVs.
+
+Combines ideas from https://github.com/JeffersonLab/epics2web
+with https://github.com/xihui/WebPDA:
+
+ * Web Socket for Channel Access, PV Access, simulated PVs, local PVs, ...
+ * JSON for the data, but packing arrays as binary
+ * Metadata is sent once, then only updates
+
+
 Building
 --------
 
