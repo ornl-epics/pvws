@@ -9,14 +9,20 @@ package pvws.ws;
 import static pvws.PVWebSocketContext.json_factory;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.DoubleBuffer;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Base64;
 
 import org.epics.util.array.ListByte;
+import org.epics.util.array.ListDouble;
 import org.epics.vtype.AlarmSeverity;
 import org.epics.vtype.VByteArray;
 import org.epics.vtype.VDouble;
+import org.epics.vtype.VDoubleArray;
 import org.epics.vtype.VEnum;
 import org.epics.vtype.VFloat;
 import org.epics.vtype.VNumber;
@@ -46,6 +52,8 @@ public class Vtype2Json
             handleEnum(g, (VEnum) value, last_value);
         else if (value instanceof VByteArray)
             handleLongString(g, (VByteArray) value);
+        else if (value instanceof VDoubleArray)
+            handleDoubles(g, (VDoubleArray) value, last_value);
         else
         {
             // TODO Many more types
@@ -123,6 +131,41 @@ public class Vtype2Json
         }
         else
             g.writeNumberField("value", value.getValue().longValue());
+    }
+
+
+    private static void handleDoubles(final JsonGenerator g, final VDoubleArray value, final VType last_value) throws Exception
+    {
+        final AlarmSeverity severity = value.getAlarm().getSeverity();
+        if (last_value == null)
+        {
+            // Initially, add complete metadata
+            g.writeStringField("units", value.getDisplay().getUnit());
+
+            final NumberFormat format =  value.getDisplay().getFormat();
+            if (format instanceof DecimalFormat)
+                g.writeNumberField("precision", ((DecimalFormat) format).getMaximumFractionDigits());
+
+            g.writeStringField("severity", severity.name());
+        }
+        else
+        {
+            // Add severity if it changed
+            if ((last_value instanceof VNumber)  &&
+                ((VNumber) last_value).getAlarm().getSeverity() != severity)
+                g.writeStringField("severity", severity.name());
+        }
+
+        // Convert into Base64 double array
+        System.out.println("Encode: " + value.getData());
+        final ListDouble data = value.getData();
+        final int N = data.size();
+        final ByteBuffer buf = ByteBuffer.allocate(N * Double.BYTES);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        final DoubleBuffer dblbuf = buf.asDoubleBuffer();
+        for (int i=0; i<N; ++i)
+            dblbuf.put(data.getDouble(i));
+        g.writeStringField("b64dbl", Base64.getEncoder().encodeToString(buf.array()));
     }
 
 

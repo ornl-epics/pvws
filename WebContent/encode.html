@@ -34,6 +34,11 @@ recovered = new Float64Array(bytes.buffer);
 
 console.log(recovered);
 
+// Convert to plain array, if necessary
+plain = Array.prototype.slice.call(recovered);
+console.log(plain);
+
+
 // Buffer size: 400
 // JSON size  : 980      +145%
 // Base 64    : 536      + 34%
