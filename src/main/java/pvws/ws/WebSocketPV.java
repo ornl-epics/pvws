@@ -22,12 +22,21 @@ import io.reactivex.disposables.Disposable;
  */
 public class WebSocketPV
 {
-    private static final int THROTTLE_MS = 1000;
+    private static final int THROTTLE_MS;
     private final String name;
     private final WebSocket socket;
     private volatile PV pv;
     private volatile Disposable subscription;
     private volatile VType last_value = null;
+
+    static
+    {
+        final String spec = System.getenv("PV_THROTTLE_MS");
+        if (spec == null)
+            THROTTLE_MS = 1000;
+        else
+            THROTTLE_MS = Integer.parseInt(spec);
+    }
 
     /** @param name PV name
      *  @param socket Socket to notify about value updates

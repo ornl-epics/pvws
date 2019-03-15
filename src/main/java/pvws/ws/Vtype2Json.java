@@ -157,7 +157,7 @@ public class Vtype2Json
         }
 
         // Convert into Base64 double array
-        System.out.println("Encode: " + value.getData());
+        // System.out.println("Encode: " + value.getData());
         final ListDouble data = value.getData();
         final int N = data.size();
         final ByteBuffer buf = ByteBuffer.allocate(N * Double.BYTES);
