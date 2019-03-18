@@ -25,7 +25,7 @@ Running under Tomcat
 --------------------
 
 Set environment variable `EPICS_CA_ADDR_LIST`, for example in `$CATALINA_HOME/bin/setenv.sh`, to the CA address list.
-
+Set environment variable `EPICS_CA_MAX_ARRAY_BYTES` to configure the CA array size.
 Set environment variable `PV_THROTTLE_MS` to the throttle-latest period in milliseconds.
 
 Place `pvws.war` in `$CATALINA_HOME/webapps`

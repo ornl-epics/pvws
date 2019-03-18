@@ -62,10 +62,14 @@ public class JCA_Preferences
 //        final String auto_addr = System.getenv("EPICS_CA_AUTO_ADDR_LIST");
 //        setSystemProperty("com.cosylab.epics.caj.CAJContext.auto_addr_list", auto_addr);
 //        setSystemProperty("gov.aps.jca.jni.JNIContext.auto_addr_list", auto_addr);
-//
-//        final String max_array_bytes = System.getenv("EPICS_CA_ADDR_LIST");
-//        setSystemProperty("com.cosylab.epics.caj.CAJContext.max_array_bytes", max_array_bytes);
-//        setSystemProperty("gov.aps.jca.jni.JNIContext.max_array_bytes", max_array_bytes);
+
+        final String max_array_bytes = System.getenv("EPICS_CA_MAX_ARRAY_BYTES");
+        if (max_array_bytes != null)
+        {
+            setSystemProperty("com.cosylab.epics.caj.CAJContext.max_array_bytes", max_array_bytes);
+            setSystemProperty("gov.aps.jca.jni.JNIContext.max_array_bytes", max_array_bytes);
+            logger.log(Level.INFO, "EPICS_CA_MAX_ARRAY_BYTES: " + max_array_bytes);
+        }
 
         // gov.aps.jca.event.QueuedEventDispatcher avoids
         // deadlocks when calling JCA while receiving JCA callbacks.

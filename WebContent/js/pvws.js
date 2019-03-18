@@ -51,12 +51,20 @@ class PVWS
                 jm.value = Array.prototype.slice.call(jm.value);
                 delete jm.b64dbl;
             }
+            else if (jm.b64int !== undefined)
+            {
+                // TODO Assert that we always use LITTLE_ENDIAN
+                let bytes = toByteArray(jm.b64int);
+                jm.value = new Int32Array(bytes.buffer);
+                // Convert to plain array, if necessary
+                jm.value = Array.prototype.slice.call(jm.value);
+                delete jm.b64int;
+            }
                 
             // Merge received data with last known value
             let value = this.values[jm.pv];
             if (value === undefined)
                 value = {}
-            
             
             // Update cached value with received changes
             Object.assign(value, jm);
