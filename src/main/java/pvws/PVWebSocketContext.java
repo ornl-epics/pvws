@@ -6,6 +6,7 @@
  ******************************************************************************/
 package pvws;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,6 +59,11 @@ public class PVWebSocketContext implements ServletContextListener
     public static void unregister(final WebSocket socket)
     {
         sockets.remove(socket);
+    }
+
+    public static Collection<WebSocket> getSockets()
+    {
+        return sockets;
     }
 
     @Override

@@ -71,6 +71,12 @@ public class WebSocketPV
         last_value = value;
     }
 
+    /** @return Most recent value or null */
+    public VType getLastValue()
+    {
+        return last_value;
+    }
+
     /** Close PV */
     public void dispose()
     {

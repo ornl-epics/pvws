@@ -12,6 +12,8 @@ import static pvws.PVWebSocketContext.logger;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -58,7 +60,7 @@ public class WebSocket
     private final Thread write_thread;
     private static final String EXIT_MESSAGE = "EXIT";
 
-    private volatile Session session;
+    private volatile Session session = null;
 
     /** Map of PV name to PV */
 	private final ConcurrentHashMap<String, WebSocketPV> pvs = new ConcurrentHashMap<>();
@@ -71,6 +73,31 @@ public class WebSocket
 	    write_thread = new Thread(this::writeQueuedMessages, "Write Thread");
 	    write_thread.setDaemon(true);
 	    write_thread.start();
+	}
+
+	/** @return Session ID */
+	public String getId()
+	{
+	    final Session safe = session;
+	    return safe == null ? "None" : safe.getId();
+	}
+
+	/** @return Timestamp (ms since epoch) of last client message */
+	public long getLastClientMessage()
+	{
+	    return last_client_message;
+	}
+
+	/** @return {@link WebSocketPV}s */
+	public Collection<WebSocketPV> getPVs()
+	{
+	    return Collections.unmodifiableCollection(pvs.values());
+	}
+
+    /** @return Number of queued messages */
+	public int getQueuedMessageCount()
+	{
+	    return write_queue.size();
 	}
 
 	private void queueMessage(final String message)

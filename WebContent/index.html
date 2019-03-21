@@ -108,9 +108,20 @@ A 'list' JSON message requests a list of PVs.
 <input type="button" value="Clear">
 
 
+<h1>Socket Info</h1>
+<p>
+The servlet <span id="info_url">ws://...</span>
+returns JSON with details on all active web sockets
+and their PVs.
+<input type="button" value="Query">
+</p>
+
+<div id="info"></div>
+
 </blockquote>
 
 <script type="text/javascript">
+// Update URLs based on the actual location of this page
 let wsurl = window.location.pathname
 wsurl = wsurl.substring(0, wsurl.indexOf("/pvws"))
 wsurl = window.location.host + wsurl + "/pvws/pv"
@@ -118,9 +129,13 @@ if (window.location.protocol == "https:")
     wsurl = "wss://" + wsurl
 else
     wsurl = "ws://" + wsurl
-
 jQuery("#url").html(wsurl);
-    
+jQuery("#info_url").html(window.location.href + "info");
+
+// Prevent 'enter' from submitting a form and thus reloading the page
+jQuery("form").submit(e => false);
+
+// Create PV Web Socket
 let pvws = new PVWS(wsurl,
     connected =>
 	{
@@ -135,11 +150,8 @@ let pvws = new PVWS(wsurl,
         let resp = jQuery("#messages");
         resp.val(JSON.stringify(message, null, 2));
     });
-    
-    
-// Prevent 'enter' from submitting a form and thus reloading the page
-jQuery("form").submit(e => false);
 
+// Have forms/buttons interact with the web socket
 jQuery("input[type=button][value=Disconnect]") .click(() => pvws.close() );
 jQuery("input[type=button][value=Ping]")       .click(() => pvws.ping() );
 jQuery("input[type=button][value=Subscribe]")  .click(() => pvws.subscribe(jQuery("#pv_name").val()) );
@@ -149,7 +161,26 @@ jQuery("input[type=button][value=Echo]")       .click(() =>
        pvws.socket.send(JSON.stringify({ type: 'echo', body: jQuery("#text").val() })));
 jQuery("input[type=button][value=Clear]")      .click(() => jQuery("#messages").val("") );
 
+// Once the page loads, open the WS
 jQuery(() => pvws.open());
+
+
+// Support querying the '/info' servlet
+jQuery("input[type=button][value=Query]") .click(() =>
+{
+    jQuery("#info").html("Fetching socket info...");
+    jQuery.ajax(
+    {
+        url: "info",
+        method: "GET",
+        dataType: "json",
+        success: data => jQuery("#info").html(JSON.stringify(data)),
+        error: (xhr, status, error) => jQuery("#info").html("No Info: " + status),
+        
+    });
+});
+
+
 </script>
 
 </body>
