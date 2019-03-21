@@ -10,11 +10,9 @@
 </head>
 <body>
 
-<blockquote>
-
 <h1>PV Web Socket</h1>
 <p>
-Web socket: <span id="url">ws://...</span> <img id="status" alt="Status" src="img/disconnected.png">
+Web socket: <span id="url" class="url">ws://...</span> <img id="status" alt="Status" src="img/disconnected.png">
 <input type="button" value="Disconnect">
 </p>
 
@@ -95,7 +93,7 @@ The client library decodes the binary data into the value field, presenting a do
 
 <h3>List</h3>
 <p>
-A 'list' JSON message requests a list of PVs.
+A 'list' JSON message requests a list of PV subscriptions for this web socket.
 </p>
 <pre>
 { "type": "list" }
@@ -108,20 +106,24 @@ A 'list' JSON message requests a list of PVs.
 <input type="button" value="Clear">
 
 
-<h1>Socket Info</h1>
+<h1>Socket and PV Pool Info</h1>
 <p>
-The servlet <span id="socket_url">ws://...</span>
+The servlet <span id="socket_url" class="url">ws://...</span>
 returns JSON with details on all active web sockets
 and their PVs.
+</p>
+<p>
+The servlet <span id="pool_url" class="url">ws://...</span>
+returns JSON with a listing of all PVs in the PV connection pool.
 </p>
 
 <div id="info"></div>
 
 <p>
-<input type="button" value="Query" onclick="query_info()">
+<input type="button" value="Sockets" onclick="query_sockets()">
+<input type="button" value="PV Pool" onclick="query_pool()">
 </p>
 
-</blockquote>
 
 <script type="text/javascript">
 // Update URLs based on the actual location of this page
@@ -134,6 +136,8 @@ else
     wsurl = "ws://" + wsurl
 jQuery("#url").html(wsurl);
 jQuery("#socket_url").html(window.location.href + "socket");
+jQuery("#pool_url").html(window.location.href + "pool");
+
 
 // Prevent 'enter' from submitting a form and thus reloading the page
 jQuery("form").submit(e => false);
@@ -159,16 +163,23 @@ jQuery("input[type=button][value=Disconnect]") .click(() => pvws.close() );
 jQuery("input[type=button][value=Ping]")       .click(() => pvws.ping() );
 jQuery("input[type=button][value=Subscribe]")  .click(() => pvws.subscribe(jQuery("#pv_name").val()) );
 jQuery("input[type=button][value=UnSubscribe]").click(() => pvws.clear(jQuery("#pv_name").val()) );
-jQuery("input[type=button][value=List]")       .click(() => pvws.list() );
+jQuery("input[type=button][value=List]")       .click(() =>
+{
+    pvws.list();
+    jQuery("#messages").get(0).scrollIntoView();
+});
 jQuery("input[type=button][value=Echo]")       .click(() =>
-       pvws.socket.send(JSON.stringify({ type: 'echo', body: jQuery("#text").val() })));
+{
+    pvws.socket.send(JSON.stringify({ type: 'echo', body: jQuery("#text").val() }));
+    jQuery("#messages").get(0).scrollIntoView()
+});
 jQuery("input[type=button][value=Clear]")      .click(() => jQuery("#messages").val("") );
 
 // Once the page loads, open the WS
 jQuery(() => pvws.open());
 
 
-function query_info()
+function query_sockets()
 {
     jQuery("#info").html("Fetching socket info...");
     jQuery.ajax(
@@ -226,9 +237,42 @@ function closeSocket(id)
     {
         url: url,
         method: "DELETE",
-        success: query_info
+        success: query_sockets
     });
 }
+
+function query_pool()
+{
+    jQuery("#info").html("Fetching PV Pool info...");
+    jQuery.ajax(
+    {
+        url: "pool",
+        method: "GET",
+        dataType: "json",
+        success: data =>
+        {
+            let info = jQuery("#info");
+            // Clear
+            info.html("");
+            
+            // Build table: Header
+            let table = jQuery("<table>");
+            table.append($("<tr>").append($("<th>").text("Refs"))
+                                  .append($("<th>").text("PV")) );
+            // .. Rows
+            for (let row of data)
+            {
+                table.append($("<tr>").append($("<td>").html(row.refs))
+                                      .append($("<td>").html(row.pv)) );
+            }
+            info.append(table);
+            // Scroll to 'bottom' to show table
+            window.scrollTo(0, 100000);
+        },
+        error: (xhr, status, error) => jQuery("#info").html("No Info: " + status),        
+    });
+}
+
 
 </script>
 

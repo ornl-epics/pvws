@@ -61,6 +61,7 @@ public class WebSocket
     private static final String EXIT_MESSAGE = "EXIT";
 
     private volatile Session session = null;
+    private volatile String id = "None";
 
     /** Map of PV name to PV */
 	private final ConcurrentHashMap<String, WebSocketPV> pvs = new ConcurrentHashMap<>();
@@ -78,8 +79,10 @@ public class WebSocket
 	/** @return Session ID */
 	public String getId()
 	{
-	    final Session safe = session;
-	    return safe == null ? "None" : safe.getId();
+	    if (session == null)
+	        return "(" + id + ")";
+	    else
+	        return id;
 	}
 
 	/** @return Timestamp (ms since epoch) of last client message */
@@ -103,7 +106,7 @@ public class WebSocket
 	private void queueMessage(final String message)
 	{
 	    if (! write_queue.offer(message))
-	        logger.log(Level.WARNING, "Cannot queue message " + message);
+	        logger.log(Level.WARNING, "Cannot queue message " + message + " for " + id);
 	}
 
 	private void writeQueuedMessages()
@@ -120,15 +123,14 @@ public class WebSocket
 	            return;
 	        }
 
+	        // Check if we should exit the thread
 	        if (message == EXIT_MESSAGE)
 	        {
-	            logger.log(Level.FINE, "Exiting write thread");
+	            logger.log(Level.FINE, "Exiting write thread " + id);
 	            return;
 	        }
 
-	        // Check if we should exit the thread
 	        final Session safe_session = session;
-
 	        try
 	        {
 	            if (safe_session == null)
@@ -157,6 +159,7 @@ public class WebSocket
 	{
 		logger.log(Level.FINE, "Opening web socket " + session.getRequestURI() + " ID " + session.getId());
 		this.session = session;
+		id = session.getId();
 		trackClientUpdate();
 	}
 
@@ -164,7 +167,7 @@ public class WebSocket
 	public void onClose(final Session session, final CloseReason reason)
 	{
 	    dispose();
-		logger.log(Level.FINE, "Web socket closed");
+		logger.log(Level.FINE, "Web socket " + id + " closed");
 		last_client_message = 0;
 	}
 
@@ -309,8 +312,8 @@ public class WebSocket
                 pv.dispose();
             }
             pvs.clear();
-            PVWebSocketContext.unregister(this);
 	    }
+	    PVWebSocketContext.unregister(this);
 	    session = null;
 	}
 }

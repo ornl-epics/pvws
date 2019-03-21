@@ -35,6 +35,7 @@ public class SocketServlet extends HttpServlet
 {
 	private static final long serialVersionUID = 1L;
 
+	/** GET /socket : Return info about all sockets and their PVs */
 	@Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
 	{
@@ -69,9 +70,9 @@ public class SocketServlet extends HttpServlet
         response.setContentType("application/json");
         final PrintWriter writer = response.getWriter();
         writer.append(buf.toString());
-
 	}
 
+    /** DELETE /socket/ID : Close socket and its PVs */
 	@Override
     protected void doDelete(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
 	{
