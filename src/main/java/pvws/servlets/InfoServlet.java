@@ -49,7 +49,7 @@ public class InfoServlet extends HttpServlet
             for (final WebSocketPV pv : socket.getPVs())
             {
                 g.writeStartObject();
-                g.writeStringField("pv", pv.getName());
+                g.writeStringField("name", pv.getName());
                 g.writeStringField("value", Objects.toString(pv.getLastValue()));
                 g.writeEndObject();
             }

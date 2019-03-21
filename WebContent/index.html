@@ -113,10 +113,13 @@ A 'list' JSON message requests a list of PVs.
 The servlet <span id="info_url">ws://...</span>
 returns JSON with details on all active web sockets
 and their PVs.
-<input type="button" value="Query">
 </p>
 
 <div id="info"></div>
+
+<p>
+<input type="button" value="Query">
+</p>
 
 </blockquote>
 
@@ -138,12 +141,12 @@ jQuery("form").submit(e => false);
 // Create PV Web Socket
 let pvws = new PVWS(wsurl,
     connected =>
-	{
-	    if (connected)
-	        jQuery("#url").html(pvws.url);
-	    else
-	        jQuery("#messages").val("");
-	    jQuery("#status").attr("src", connected ? "img/connected.png" : "img/disconnected.png");
+    {
+        if (connected)
+            jQuery("#url").html(pvws.url);
+        else
+            jQuery("#messages").val("");
+        jQuery("#status").attr("src", connected ? "img/connected.png" : "img/disconnected.png");
     },
     message =>
     {
@@ -174,7 +177,42 @@ jQuery("input[type=button][value=Query]") .click(() =>
         url: "info",
         method: "GET",
         dataType: "json",
-        success: data => jQuery("#info").html(JSON.stringify(data)),
+        success: data =>
+        {
+            let info = jQuery("#info");
+            info.html(JSON.stringify(data));
+            info.html("");
+            
+            let table = jQuery("<table>");
+            table.append($("<tr>").append($("<th>").text("ID"))
+                                  .append($("<th>").text("Queue Size"))
+                                  .append($("<th>").text("Last Client Message"))
+                                  .append($("<th>").text("PVs"))
+                        );
+            
+            let sock;
+            for (sock of data.sockets)
+            {
+                console.log(sock);
+                let pv, pv_info = "";
+                for (pv of sock.pvs)
+                {
+                    if (pv.value.length > 100)
+                        pv.value = pv.value.substring(0, 100) + "...";
+                    pv_info += pv.name + " = " + pv.value + "<br>";
+                }
+                let update = sock.last_client_message == 0 ? "-" : new Date(sock.last_client_message);
+                table.append($("<tr>").append($("<td>").text(sock.id))
+                                      .append($("<td>").text(sock.queued))
+                                      .append($("<td>").text(update))
+                                      .append($("<td>").html(pv_info))
+              );
+            }
+            
+            info.append(table);
+            // Scroll to 'bottom' to show table
+            window.scrollTo(0, 100000);
+        },
         error: (xhr, status, error) => jQuery("#info").html("No Info: " + status),
         
     });
