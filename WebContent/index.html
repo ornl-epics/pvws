@@ -110,7 +110,7 @@ A 'list' JSON message requests a list of PVs.
 
 <h1>Socket Info</h1>
 <p>
-The servlet <span id="info_url">ws://...</span>
+The servlet <span id="socket_url">ws://...</span>
 returns JSON with details on all active web sockets
 and their PVs.
 </p>
@@ -118,7 +118,7 @@ and their PVs.
 <div id="info"></div>
 
 <p>
-<input type="button" value="Query">
+<input type="button" value="Query" onclick="query_info()">
 </p>
 
 </blockquote>
@@ -133,7 +133,7 @@ if (window.location.protocol == "https:")
 else
     wsurl = "ws://" + wsurl
 jQuery("#url").html(wsurl);
-jQuery("#info_url").html(window.location.href + "info");
+jQuery("#socket_url").html(window.location.href + "socket");
 
 // Prevent 'enter' from submitting a form and thus reloading the page
 jQuery("form").submit(e => false);
@@ -168,56 +168,67 @@ jQuery("input[type=button][value=Clear]")      .click(() => jQuery("#messages").
 jQuery(() => pvws.open());
 
 
-// Support querying the '/info' servlet
-jQuery("input[type=button][value=Query]") .click(() =>
+function query_info()
 {
     jQuery("#info").html("Fetching socket info...");
     jQuery.ajax(
     {
-        url: "info",
+        url: "socket",
         method: "GET",
         dataType: "json",
         success: data =>
         {
             let info = jQuery("#info");
-            info.html(JSON.stringify(data));
+            // Clear
             info.html("");
             
+            // Build table: Header
             let table = jQuery("<table>");
             table.append($("<tr>").append($("<th>").text("ID"))
                                   .append($("<th>").text("Queue Size"))
                                   .append($("<th>").text("Last Client Message"))
-                                  .append($("<th>").text("PVs"))
-                        );
-            
-            let sock;
-            for (sock of data.sockets)
+                                  .append($("<th>").text("PVs")) );
+            // .. Rows
+            for (let sock of data.sockets)
             {
-                console.log(sock);
-                let pv, pv_info = "";
-                for (pv of sock.pvs)
+                let id = sock.id;
+                if (id != 'None')
+                    id = id + '<input type="button" value="x" onclick="closeSocket(\'' + sock.id + '\')">';
+                    
+                let i=0, pv_info = "";
+                for (let pv of sock.pvs)
                 {
-                    if (pv.value.length > 100)
-                        pv.value = pv.value.substring(0, 100) + "...";
-                    pv_info += pv.name + " = " + pv.value + "<br>";
+                    //if (pv.value.length > 100)
+                    //    pv.value = pv.value.substring(0, 100) + "...";
+                    //pv_info += pv.name + " = " + pv.value + "<br>";
+                    
+                    ++i;
+                    pv_info += i + ": " + pv.name + "<br>";
                 }
                 let update = sock.last_client_message == 0 ? "-" : new Date(sock.last_client_message);
-                table.append($("<tr>").append($("<td>").text(sock.id))
+                table.append($("<tr>").append($("<td>").html(id))
                                       .append($("<td>").text(sock.queued))
                                       .append($("<td>").text(update))
-                                      .append($("<td>").html(pv_info))
-              );
+                                      .append($("<td>").html(pv_info)) );
             }
-            
             info.append(table);
             // Scroll to 'bottom' to show table
             window.scrollTo(0, 100000);
         },
-        error: (xhr, status, error) => jQuery("#info").html("No Info: " + status),
-        
+        error: (xhr, status, error) => jQuery("#info").html("No Info: " + status),        
     });
-});
+}
 
+function closeSocket(id)
+{
+    let url = "socket/" + id;
+    jQuery.ajax(
+    {
+        url: url,
+        method: "DELETE",
+        success: query_info
+    });
+}
 
 </script>
 

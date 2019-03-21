@@ -7,11 +7,13 @@
 package pvws.servlets;
 
 import static pvws.PVWebSocketContext.json_factory;
+import static pvws.PVWebSocketContext.logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Objects;
+import java.util.logging.Level;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -28,8 +30,8 @@ import pvws.ws.WebSocketPV;
 /** Servlet to list Web Sockets and their PVs
  *  @author Kay Kasemir
  */
-@WebServlet("/info")
-public class InfoServlet extends HttpServlet
+@WebServlet("/socket/*")
+public class SocketServlet extends HttpServlet
 {
 	private static final long serialVersionUID = 1L;
 
@@ -71,9 +73,16 @@ public class InfoServlet extends HttpServlet
 	}
 
 	@Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    protected void doDelete(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
 	{
-		// TODO Auto-generated method stub
+	    final String id = request.getPathInfo().substring(1);
+	    for (final WebSocket socket : PVWebSocketContext.getSockets())
+            if (id.equals(socket.getId()))
+            {
+                logger.log(Level.INFO, "DELETE socket '" + id + "'");
+                socket.dispose();
+                return;
+            }
+        logger.log(Level.WARNING, "Cannot DELETE socket '" + id + "'");
 	}
-
 }
