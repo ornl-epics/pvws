@@ -75,11 +75,23 @@ Value updates are JSON messages with the following elements:
   <dt>pv</dt>         <dd>PV Name</dd>
   <dt>severity</dt>   <dd>NONE, MINOR, MAJOR, INVALID, UNDEFINED</dd>
   <dt>value</dt>      <dd>Value of numeric PV or 'NaN'; Enum PV's numeric value</dd>
-  <dt>text</dt>       <dd>Value of text PV; Selected label of enum PV.</dd>
+  <dt>text</dt>       <dd>Value of text PV; Selected label of enum PV</dd>
   <dt>units</dt>      <dd>Numeric PV units</dd>
   <dt>precision</dt>  <dd>Numeric PV precision</dd>
+  <dt>labels</dt>     <dd>Array of labels for enum PV</dd>
 </dl>
 
+<p>
+The web socket sends the complete meta data (units, labels, ..) on the first update.
+Further messages only contain the changed severity and value/text.
+The client library merges received data and thus always presents the complete PV information.
+</p>
+
+<p>
+For arrays, the web socket sends the data in a field 'b64dbl' or 'b64int' which contains
+the Base-64 encoded binary array of double respectively int values, using little-endian byte order.
+The client library decodes the binary data into the value field, presenting a double resp. int array.
+</p>
 
 <h3>List</h3>
 <p>

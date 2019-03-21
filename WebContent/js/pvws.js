@@ -42,22 +42,21 @@ class PVWS
         if (jm.type === "update")
         {
             // Decode binary
+            // TODO Assert that we always use LITTLE_ENDIAN
             if (jm.b64dbl !== undefined)
             {
-                // TODO Assert that we always use LITTLE_ENDIAN
                 let bytes = toByteArray(jm.b64dbl);
                 jm.value = new Float64Array(bytes.buffer);
                 // Convert to plain array, if necessary
-                jm.value = Array.prototype.slice.call(jm.value);
+                // jm.value = Array.prototype.slice.call(jm.value);
                 delete jm.b64dbl;
             }
             else if (jm.b64int !== undefined)
             {
-                // TODO Assert that we always use LITTLE_ENDIAN
                 let bytes = toByteArray(jm.b64int);
                 jm.value = new Int32Array(bytes.buffer);
                 // Convert to plain array, if necessary
-                jm.value = Array.prototype.slice.call(jm.value);
+                // jm.value = Array.prototype.slice.call(jm.value);
                 delete jm.b64int;
             }
                 
