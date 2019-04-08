@@ -25,6 +25,7 @@ import org.epics.vtype.VDoubleArray;
 import org.epics.vtype.VEnum;
 import org.epics.vtype.VLong;
 import org.epics.vtype.VString;
+import org.epics.vtype.VStringArray;
 // import org.epics.vtype.VStringArray;
 import org.epics.vtype.VTable;
 import org.epics.vtype.VType;
@@ -223,9 +224,8 @@ public class ValueHelper
         if (type == VDoubleArray.class)
             return VDoubleArray.of(ArrayDouble.of(getInitialDoubles(items)), Alarm.none(), Time.now(), Display.none());
 
-        // TODO
-//        if (type == VStringArray.class)
-//            return VStringArray.of(getInitialStrings(items), Alarm.none(), Time.now());
+        if (type == VStringArray.class)
+            return VStringArray.of(getInitialStrings(items), Alarm.none(), Time.now());
 
         if (type == VEnum.class)
         {
@@ -319,16 +319,15 @@ public class ValueHelper
                     {
                         // Ignore, try next type
                     }
-                    // TODO
-//                    if (new_value instanceof String[])
-//                        return VStringArray.of(List.of((String[]) new_value), Alarm.none(), Time.now());
-//                    if (new_value instanceof List)
-//                    {   // Assert each list element is a String
-//                        final List<String> strings = new ArrayList<>();
-//                        for (Object item : (List<?>)new_value)
-//                            strings.add(Objects.toString(item));
-//                        return VStringArray.of(strings, Alarm.none(), Time.now());
-//                    }
+                    if (new_value instanceof String[])
+                        return VStringArray.of(Arrays.asList((String[]) new_value), Alarm.none(), Time.now());
+                    if (new_value instanceof List)
+                    {   // Assert each list element is a String
+                        final List<String> strings = new ArrayList<>();
+                        for (final Object item : (List<?>)new_value)
+                            strings.add(Objects.toString(item));
+                        return VStringArray.of(strings, Alarm.none(), Time.now());
+                    }
                 }
                 throw new Exception("Cannot parse number from '" + new_value + "'");
             }
@@ -372,22 +371,21 @@ public class ValueHelper
             }
         }
 
-        // TODO
-//        if (type == VStringArray.class)
-//        {   // Pass String
-//            if (new_value instanceof String)
-//                return VStringArray.of(List.of((String) new_value), Alarm.none(), Time.now());
-//            // Pass String[]
-//            if (new_value instanceof String[])
-//                return VStringArray.of(List.of((String[]) new_value), Alarm.none(), Time.now());
-//            if (new_value instanceof List)
-//            {   // Assert each list element is a String
-//                final List<String> strings = new ArrayList<>();
-//                for (Object item : (List<?>)new_value)
-//                    strings.add(Objects.toString(item));
-//                return VStringArray.of(strings, Alarm.none(), Time.now());
-//            }
-//        }
+        if (type == VStringArray.class)
+        {   // Pass String
+            if (new_value instanceof String)
+                return VStringArray.of(Arrays.asList((String) new_value), Alarm.none(), Time.now());
+            // Pass String[]
+            if (new_value instanceof String[])
+                return VStringArray.of(Arrays.asList((String[]) new_value), Alarm.none(), Time.now());
+            if (new_value instanceof List)
+            {   // Assert each list element is a String
+                final List<String> strings = new ArrayList<>();
+                for (final Object item : (List<?>)new_value)
+                    strings.add(Objects.toString(item));
+                return VStringArray.of(strings, Alarm.none(), Time.now());
+            }
+        }
 
         if (type == VEnum.class)
         {

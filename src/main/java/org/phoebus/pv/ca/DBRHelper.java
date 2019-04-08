@@ -11,6 +11,7 @@ import static org.phoebus.pv.PV.logger;
 
 import java.text.NumberFormat;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.logging.Level;
 
 import org.epics.util.array.ArrayByte;
@@ -32,6 +33,7 @@ import org.epics.vtype.VByteArray;
 import org.epics.vtype.VDouble;
 import org.epics.vtype.VDoubleArray;
 import org.epics.vtype.VEnum;
+import org.epics.vtype.VEnumArray;
 import org.epics.vtype.VFloat;
 import org.epics.vtype.VFloatArray;
 import org.epics.vtype.VInt;
@@ -39,6 +41,7 @@ import org.epics.vtype.VIntArray;
 import org.epics.vtype.VShort;
 import org.epics.vtype.VShortArray;
 import org.epics.vtype.VString;
+import org.epics.vtype.VStringArray;
 import org.epics.vtype.VType;
 
 import gov.aps.jca.dbr.CTRL;
@@ -193,9 +196,9 @@ public class DBRHelper
         if (dbr instanceof DBR_String)
         {
             final DBR_String xx = (DBR_String) dbr;
-// TODO            if (is_array)
-//                return VStringArray.of(List.of(xx.getStringValue()), convertAlarm(xx), convertTime(xx));
-//            else
+            if (is_array)
+                return VStringArray.of(Arrays.asList(xx.getStringValue()), convertAlarm(xx), convertTime(xx));
+            else
                 return VString.of(xx.getStringValue()[0], convertAlarm(xx), convertTime(xx));
         }
 
@@ -209,8 +212,8 @@ public class DBRHelper
                 enum_meta = EnumDisplay.of();
             try
             {
-//    TODO             if (is_array)
-//                    return VEnumArray.of(ArrayShort.of(xx.getEnumValue()), enum_meta, convertAlarm(dbr), convertTime(dbr));
+                if (is_array)
+                    return VEnumArray.of(ArrayShort.of(xx.getEnumValue()), enum_meta, convertAlarm(dbr), convertTime(dbr));
                 return VEnum.of(xx.getEnumValue()[0], enum_meta, convertAlarm(dbr), convertTime(dbr));
             }
             catch (final IndexOutOfBoundsException ex)
@@ -233,8 +236,8 @@ public class DBRHelper
                 ? EnumDisplay.of(((LABELS) metadata).getLabels())
                 : EnumDisplay.of();
 
-// TODO           if (is_array)
-//                return VEnumArray.of(ArrayShort.of(need.getEnumValue()), enum_meta, convertAlarm(need), convertTime(need));
+            if (is_array)
+                return VEnumArray.of(ArrayShort.of(need.getEnumValue()), enum_meta, convertAlarm(need), convertTime(need));
             return VEnum.of(need.getEnumValue()[0], enum_meta, convertAlarm(need), convertTime(need));
         }
 
