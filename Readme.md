@@ -50,3 +50,9 @@ Uses slightly modified copy of Phoebus core-pv:
 
  * Builds with Java 8, not depending on Java 9+, yet
  * Allow use without Phoebus's preference handling
+ 
+TODO:
+
+ * Move to Java 11, then use Phoebus core-pv "as is" with PVA, MQTT support
+ * Support writing
+
