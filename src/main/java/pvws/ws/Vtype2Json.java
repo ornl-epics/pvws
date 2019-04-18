@@ -21,6 +21,7 @@ import java.util.Base64;
 import org.epics.util.array.ListByte;
 import org.epics.util.array.ListDouble;
 import org.epics.util.array.ListInteger;
+import org.epics.util.stats.Range;
 import org.epics.vtype.AlarmSeverity;
 import org.epics.vtype.VByteArray;
 import org.epics.vtype.VDouble;
@@ -117,6 +118,10 @@ public class Vtype2Json
                 g.writeNumberField("precision", ((DecimalFormat) format).getMaximumFractionDigits());
 
             g.writeStringField("severity", severity.name());
+
+            final Range range = value.getDisplay().getDisplayRange();
+            g.writeNumberField("min", range.getMinimum());
+            g.writeNumberField("max", range.getMaximum());
         }
         else
         {
