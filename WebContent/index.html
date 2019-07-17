@@ -100,6 +100,25 @@ A 'list' JSON message requests a list of PV subscriptions for this web socket.
 </pre>
 <input type="button" value="List">
 
+
+<h3>Write</h3>
+<p>
+By default, the PV Web Socket is read-only.
+When configured to support writing, you can write to a PV.
+The PV must be known, i.e. there must be an active subscription.
+Send the following type of message to write a value to a subscribed PV:
+</p>
+<pre>
+{ "type": "write", "pv": "NameOfPV", "value": number_or_string }
+</pre>
+<form>
+  PV Name: <input type="text" id="write_pv" size="40" value="loc://x(0)">
+  Value:   <input type="text" id="write_value" size="10" value="42">
+           <input type="checkbox" id="write_numeric" value="true" checked>Number
+           <input type="button" value="Write">
+</form>
+
+
 <h3>Messages</h3>
 
 <textarea id="messages" rows="10" style="width: 100%"></textarea>
@@ -160,19 +179,35 @@ let pvws = new PVWS(wsurl,
 
 // Have forms/buttons interact with the web socket
 jQuery("input[type=button][value=Disconnect]") .click(() => pvws.close() );
+
 jQuery("input[type=button][value=Ping]")       .click(() => pvws.ping() );
+
 jQuery("input[type=button][value=Subscribe]")  .click(() => pvws.subscribe(jQuery("#pv_name").val()) );
+
 jQuery("input[type=button][value=UnSubscribe]").click(() => pvws.clear(jQuery("#pv_name").val()) );
+
+jQuery("input[type=button][value=Write]")      .click(() =>
+{
+    let pv = jQuery("#write_pv").val();
+    let value = jQuery("#write_value").val();
+    if (jQuery("#write_numeric").prop("checked"))
+        value = Number(value);
+    pvws.write(pv, value);    
+    jQuery("#messages").get(0).scrollIntoView();
+});
+
 jQuery("input[type=button][value=List]")       .click(() =>
 {
     pvws.list();
     jQuery("#messages").get(0).scrollIntoView();
 });
+
 jQuery("input[type=button][value=Echo]")       .click(() =>
 {
     pvws.socket.send(JSON.stringify({ type: 'echo', body: jQuery("#text").val() }));
     jQuery("#messages").get(0).scrollIntoView()
 });
+
 jQuery("input[type=button][value=Clear]")      .click(() => jQuery("#messages").val("") );
 
 // Once the page loads, open the WS

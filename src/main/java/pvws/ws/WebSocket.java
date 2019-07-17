@@ -36,6 +36,7 @@ import org.epics.vtype.VType;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 
 import pvws.PVWebSocketContext;
 
@@ -255,6 +256,35 @@ public class WebSocket
                     queueMessage(buf.toString());
                 }
                 break;
+            case "write":
+                {
+                    JsonNode n = json.path("pv");
+                    if (n.isMissingNode())
+                        throw new Exception("Missing 'pv' in " + message);
+                    final String pv_name = n.asText();
+
+                    n = json.path("value");
+                    if (n.isMissingNode())
+                        throw new Exception("Missing 'value' in " + message);
+                    final Object value;
+                    if (n.getNodeType() == JsonNodeType.NUMBER)
+                        value = n.asDouble();
+                    else
+                        value = n.asText();
+
+                    try
+                    {
+                        final WebSocketPV pv = pvs.get(pv_name);
+                        if (pv == null)
+                            throw new Exception("Cannot write unknown PV " + pv_name);
+                        pv.write(value);
+                    }
+                    catch (final Exception ex)
+                    {
+                        sendError(ex.getMessage());
+                    }
+                }
+                break;
             case "ping":
                 logger.log(Level.FINER, "Sending ping...");
                 remote.sendPing(ByteBuffer.allocate(0));
@@ -268,7 +298,7 @@ public class WebSocket
 		}
 		catch (final Exception ex)
 		{
-            logger.log(Level.WARNING, "Message error", ex);
+            logger.log(Level.WARNING, "Error for message " + message, ex);
 		}
 	}
 
@@ -290,9 +320,30 @@ public class WebSocket
 	    }
 	    catch (final Exception ex)
 	    {
-	        logger.log(Level.WARNING, "Cannot cannot send " + name + " = " + value, ex);
+	        logger.log(Level.WARNING, "Cannot send " + name + " = " + value, ex);
 	    }
 	}
+
+	/** @param message Error message */
+    public void sendError(final String message)
+    {
+        try
+        {
+            final ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            final JsonGenerator g = json_factory.createGenerator(buf);
+            g.writeStartObject();
+            g.writeStringField("type", "error");
+            g.writeStringField("message", message);
+            g.writeEndObject();
+            g.flush();
+            queueMessage(buf.toString());
+        }
+        catch (final Exception ex)
+        {
+            logger.log(Level.WARNING, "Cannot send error " + message, ex);
+        }
+    }
+
 
 	/** Clears all PVs
 	 *

@@ -22,7 +22,12 @@ import io.reactivex.disposables.Disposable;
  */
 public class WebSocketPV
 {
+    /** Value throttle */
     private static final int THROTTLE_MS;
+
+    /** Support writing? */
+    private static final boolean PV_WRITE_SUPPORT;
+
     private final String name;
     private final WebSocket socket;
     private volatile PV pv;
@@ -31,11 +36,14 @@ public class WebSocketPV
 
     static
     {
-        final String spec = System.getenv("PV_THROTTLE_MS");
+        String spec = System.getenv("PV_THROTTLE_MS");
         if (spec == null)
             THROTTLE_MS = 1000;
         else
             THROTTLE_MS = Integer.parseInt(spec);
+
+        spec = System.getenv("PV_WRITE_SUPPORT");
+        PV_WRITE_SUPPORT = "true".equalsIgnoreCase(spec);
     }
 
     /** @param name PV name
@@ -75,6 +83,17 @@ public class WebSocketPV
     public VType getLastValue()
     {
         return last_value;
+    }
+
+    /** @param new_value Value to write to PV
+     *  @throws Exception on error
+     */
+    public void write(Object new_value) throws Exception
+    {
+        if (PV_WRITE_SUPPORT)
+            pv.write(new_value);
+        else
+            throw new Exception("PV_WRITE_SUPPORT is not true");
     }
 
     /** Close PV */

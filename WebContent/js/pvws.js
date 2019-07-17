@@ -132,6 +132,15 @@ class PVWS
         this.socket.send(JSON.stringify({ type: "list" }));
     }
     
+    /** Write to PV
+     *  @param pvs PV name
+     *  @param value number or string
+     */
+    write(pv, value)
+    {
+        this.socket.send(JSON.stringify({ type: "write", pv: pv, value: value }));
+    }
+    
     /** Close the web socket.
      * 
      *  <p>Socket will automatically re-open,

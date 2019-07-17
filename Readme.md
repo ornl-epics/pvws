@@ -29,7 +29,8 @@ Set the following environment variables, for example in `$CATALINA_HOME/bin/sete
  * `EPICS_CA_ADDR_LIST`: CA address list.
  * `EPICS_CA_MAX_ARRAY_BYTES`: CA array size.
  * `PV_THROTTLE_MS`: Throttle-latest period in milliseconds.
-
+ * `PV_WRITE_SUPPORT`: Set to `true` to enable writing.
+ 
 Place `pvws.war` in `$CATALINA_HOME/webapps`
 
 
@@ -54,5 +55,5 @@ Uses slightly modified copy of Phoebus core-pv:
 TODO:
 
  * Move to Java 11, then use Phoebus core-pv "as is" with PVA, MQTT support
- * Support writing
+ * Report read/only or write access
 
