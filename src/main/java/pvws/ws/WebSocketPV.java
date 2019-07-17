@@ -33,6 +33,7 @@ public class WebSocketPV
     private volatile PV pv;
     private volatile Disposable subscription;
     private volatile VType last_value = null;
+    private volatile boolean last_readonly = true;
 
     static
     {
@@ -75,8 +76,9 @@ public class WebSocketPV
 
     private void handleUpdates(final VType value)
     {
-        socket.sendUpdate(name, value, last_value);
+        socket.sendUpdate(name, value, last_value, last_readonly, pv.isReadonly());
         last_value = value;
+        last_readonly = pv.isReadonly();
     }
 
     /** @return Most recent value or null */

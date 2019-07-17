@@ -31,6 +31,11 @@ Set the following environment variables, for example in `$CATALINA_HOME/bin/sete
  * `PV_THROTTLE_MS`: Throttle-latest period in milliseconds.
  * `PV_WRITE_SUPPORT`: Set to `true` to enable writing.
  
+When enabling write access, actual write access is still controlled
+on a per-PV basis by Channel Access or PV Access security,
+but note that the user and host seen by the CA resp. PVA server
+is tomcat and not the web client end user.
+ 
 Place `pvws.war` in `$CATALINA_HOME/webapps`
 
 
@@ -55,5 +60,4 @@ Uses slightly modified copy of Phoebus core-pv:
 TODO:
 
  * Move to Java 11, then use Phoebus core-pv "as is" with PVA, MQTT support
- * Report read/only or write access
 

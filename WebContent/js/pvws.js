@@ -62,8 +62,10 @@ class PVWS
                 
             // Merge received data with last known value
             let value = this.values[jm.pv];
+            // No previous value:
+            // Default to read-only, no data
             if (value === undefined)
-                value = {}
+                value = { pv: jm.pv, readonly: true };
             
             // Update cached value with received changes
             Object.assign(value, jm);

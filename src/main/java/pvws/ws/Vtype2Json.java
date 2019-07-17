@@ -40,7 +40,7 @@ public class Vtype2Json
     private static final Charset UTF8 = Charset.forName("UTF-8");
 
 
-    public static String toJson(final String name, final VType value, final VType last_value) throws Exception
+    public static String toJson(final String name, final VType value, final VType last_value, final boolean last_readonly, final boolean readonly) throws Exception
     {
         final ByteArrayOutputStream buf = new ByteArrayOutputStream();
         final JsonGenerator g = json_factory.createGenerator(buf);
@@ -65,6 +65,10 @@ public class Vtype2Json
             // TODO Many more types
             g.writeStringField("text", value.toString());
         }
+
+        // Change in read/write access?
+        if (last_readonly != readonly)
+            g.writeBooleanField("readonly", readonly);
 
         g.writeEndObject();
         g.flush();

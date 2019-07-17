@@ -65,123 +65,123 @@ public class WebSocket
     private volatile String id = "None";
 
     /** Map of PV name to PV */
-	private final ConcurrentHashMap<String, WebSocketPV> pvs = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, WebSocketPV> pvs = new ConcurrentHashMap<>();
 
-	public WebSocket()
-	{
-	    // Constructor, register with PVWebSocketContext
-	    PVWebSocketContext.register(this);
+    public WebSocket()
+    {
+        // Constructor, register with PVWebSocketContext
+        PVWebSocketContext.register(this);
 
-	    write_thread = new Thread(this::writeQueuedMessages, "Write Thread");
-	    write_thread.setDaemon(true);
-	    write_thread.start();
-	}
+        write_thread = new Thread(this::writeQueuedMessages, "Write Thread");
+        write_thread.setDaemon(true);
+        write_thread.start();
+    }
 
-	/** @return Session ID */
-	public String getId()
-	{
-	    if (session == null)
-	        return "(" + id + ")";
-	    else
-	        return id;
-	}
+    /** @return Session ID */
+    public String getId()
+    {
+        if (session == null)
+            return "(" + id + ")";
+        else
+            return id;
+    }
 
-	/** @return Timestamp (ms since epoch) of last client message */
-	public long getLastClientMessage()
-	{
-	    return last_client_message;
-	}
+    /** @return Timestamp (ms since epoch) of last client message */
+    public long getLastClientMessage()
+    {
+        return last_client_message;
+    }
 
-	/** @return {@link WebSocketPV}s */
-	public Collection<WebSocketPV> getPVs()
-	{
-	    return Collections.unmodifiableCollection(pvs.values());
-	}
+    /** @return {@link WebSocketPV}s */
+    public Collection<WebSocketPV> getPVs()
+    {
+        return Collections.unmodifiableCollection(pvs.values());
+    }
 
     /** @return Number of queued messages */
-	public int getQueuedMessageCount()
-	{
-	    return write_queue.size();
-	}
+    public int getQueuedMessageCount()
+    {
+        return write_queue.size();
+    }
 
-	private void queueMessage(final String message)
-	{
-	    if (! write_queue.offer(message))
-	        logger.log(Level.WARNING, "Cannot queue message " + message + " for " + id);
-	}
+    private void queueMessage(final String message)
+    {
+        if (! write_queue.offer(message))
+            logger.log(Level.WARNING, "Cannot queue message " + message + " for " + id);
+    }
 
-	private void writeQueuedMessages()
-	{
-	    while (true)
-	    {
-	        final String message;
-	        try
-	        {
-	            message = write_queue.take();
-	        }
-	        catch (final InterruptedException ex)
-	        {
-	            return;
-	        }
+    private void writeQueuedMessages()
+    {
+        while (true)
+        {
+            final String message;
+            try
+            {
+                message = write_queue.take();
+            }
+            catch (final InterruptedException ex)
+            {
+                return;
+            }
 
-	        // Check if we should exit the thread
-	        if (message == EXIT_MESSAGE)
-	        {
-	            logger.log(Level.FINE, "Exiting write thread " + id);
-	            return;
-	        }
+            // Check if we should exit the thread
+            if (message == EXIT_MESSAGE)
+            {
+                logger.log(Level.FINE, "Exiting write thread " + id);
+                return;
+            }
 
-	        final Session safe_session = session;
-	        try
-	        {
-	            if (safe_session == null)
-	                throw new Exception("No session");
-	            if (! safe_session.isOpen())
-	                throw new Exception("Session closed");
+            final Session safe_session = session;
+            try
+            {
+                if (safe_session == null)
+                    throw new Exception("No session");
+                if (! safe_session.isOpen())
+                    throw new Exception("Session closed");
                 safe_session.getBasicRemote().sendText(message);
             }
-	        catch (final Exception ex)
-	        {
-	            logger.log(Level.WARNING, "Cannot write '" + message + "'", ex);
+            catch (final Exception ex)
+            {
+                logger.log(Level.WARNING, "Cannot write '" + message + "'", ex);
             }
-	    }
-	}
+        }
+    }
 
-	private void trackClientUpdate()
-	{
-	    last_client_message = System.currentTimeMillis();
-	}
+    private void trackClientUpdate()
+    {
+        last_client_message = System.currentTimeMillis();
+    }
 
-	// TODO SessionManager:
-	// Periodically 'ping'
-	// Track time of last interaction
-	@OnOpen
-	public void onOpen(final Session session, final EndpointConfig config)
-	{
-		logger.log(Level.FINE, "Opening web socket " + session.getRequestURI() + " ID " + session.getId());
-		this.session = session;
-		id = session.getId();
-		trackClientUpdate();
-	}
+    // TODO SessionManager:
+    // Periodically 'ping'
+    // Track time of last interaction
+    @OnOpen
+    public void onOpen(final Session session, final EndpointConfig config)
+    {
+        logger.log(Level.FINE, "Opening web socket " + session.getRequestURI() + " ID " + session.getId());
+        this.session = session;
+        id = session.getId();
+        trackClientUpdate();
+    }
 
-	@OnClose
-	public void onClose(final Session session, final CloseReason reason)
-	{
-	    dispose();
-		logger.log(Level.FINE, "Web socket " + id + " closed");
-		last_client_message = 0;
-	}
+    @OnClose
+    public void onClose(final Session session, final CloseReason reason)
+    {
+        dispose();
+        logger.log(Level.FINE, "Web socket " + id + " closed");
+        last_client_message = 0;
+    }
 
-	@OnMessage
-	public void onPong(final PongMessage message, final Session session)
-	{
-		logger.log(Level.FINER, "Got pong");
-		trackClientUpdate();
-	}
+    @OnMessage
+    public void onPong(final PongMessage message, final Session session)
+    {
+        logger.log(Level.FINER, "Got pong");
+        trackClientUpdate();
+    }
 
-	private List<String> getPVs(final String message, final JsonNode json) throws Exception
-	{
-	    final JsonNode node = json.path("pvs");
+    private List<String> getPVs(final String message, final JsonNode json) throws Exception
+    {
+        final JsonNode node = json.path("pvs");
         if (node.isMissingNode())
             throw new Exception("Missing 'pvs' in " + message);
         final Iterator<JsonNode> nodes = node.elements();
@@ -189,24 +189,24 @@ public class WebSocket
         while (nodes.hasNext())
             pvs.add(nodes.next().asText());
         return pvs;
-	}
+    }
 
-	@OnMessage
-	public void onMessage(final String message, final Session session)
-	{
-	    trackClientUpdate();
-		logger.log(Level.FINER, "Received: " + message + " on " + Thread.currentThread());
+    @OnMessage
+    public void onMessage(final String message, final Session session)
+    {
+        trackClientUpdate();
+        logger.log(Level.FINER, "Received: " + message + " on " + Thread.currentThread());
 
-		try
-		{
-			final Basic remote = session.getBasicRemote();
+        try
+        {
+            final Basic remote = session.getBasicRemote();
 
-			final ObjectMapper mapper = new ObjectMapper(json_factory);
+            final ObjectMapper mapper = new ObjectMapper(json_factory);
             final JsonNode json = mapper.readTree(message);
-			final JsonNode node = json.path("type");
-			if (node.isMissingNode())
-			    throw new Exception("Missing 'type' in " + message);
-	        final String type = node.asText();
+            final JsonNode node = json.path("type");
+            if (node.isMissingNode())
+                throw new Exception("Missing 'type' in " + message);
+            final String type = node.asText();
             switch (type)
             {
             // Support 'monitor' for compatibility with epics2web
@@ -295,36 +295,38 @@ public class WebSocket
             default:
                 throw new Exception("Unknown message type: " + message);
             }
-		}
-		catch (final Exception ex)
-		{
+        }
+        catch (final Exception ex)
+        {
             logger.log(Level.WARNING, "Error for message " + message, ex);
-		}
-	}
+        }
+    }
 
-	@OnError
-	public void onError(final Throwable ex)
-	{
+    @OnError
+    public void onError(final Throwable ex)
+    {
         logger.log(Level.WARNING, "Web Socket error", ex);
-	}
+    }
 
-	/** @param name PV name for which to send an update
-	 *  @param value Current value
-	 *  @param last_value Previous value
-	 */
-	public void sendUpdate(final String name, final VType value, final VType last_value)
-	{
-	    try
-	    {
-    	    queueMessage(Vtype2Json.toJson(name, value, last_value));
-	    }
-	    catch (final Exception ex)
-	    {
-	        logger.log(Level.WARNING, "Cannot send " + name + " = " + value, ex);
-	    }
-	}
+    /** @param name PV name for which to send an update
+     *  @param value Current value
+     *  @param last_value Previous value
+     *  @param last_readonly Was the PV read-only?
+     *  @param readonly Is the PV read-only?
+     */
+    public void sendUpdate(final String name, final VType value, final VType last_value, final boolean last_readonly, final boolean readonly)
+    {
+        try
+        {
+            queueMessage(Vtype2Json.toJson(name, value, last_value, last_readonly, readonly));
+        }
+        catch (final Exception ex)
+        {
+            logger.log(Level.WARNING, "Cannot send " + name + " = " + value, ex);
+        }
+    }
 
-	/** @param message Error message */
+    /** @param message Error message */
     public void sendError(final String message)
     {
         try
@@ -345,17 +347,17 @@ public class WebSocket
     }
 
 
-	/** Clears all PVs
-	 *
-	 *  <p>Web socket calls this onClose(),
-	 *  but context may also call this again just in case
-	 */
-	public void dispose()
-	{
-	    // Exit write thread
-	    queueMessage(EXIT_MESSAGE);
-	    if (! pvs.isEmpty())
-	    {
+    /** Clears all PVs
+     *
+     *  <p>Web socket calls this onClose(),
+     *  but context may also call this again just in case
+     */
+    public void dispose()
+    {
+        // Exit write thread
+        queueMessage(EXIT_MESSAGE);
+        if (! pvs.isEmpty())
+        {
             logger.log(Level.FINE, "Disposing web socket PVs:");
             for (final WebSocketPV pv : pvs.values())
             {
@@ -363,8 +365,8 @@ public class WebSocket
                 pv.dispose();
             }
             pvs.clear();
-	    }
-	    PVWebSocketContext.unregister(this);
-	    session = null;
-	}
+        }
+        PVWebSocketContext.unregister(this);
+        session = null;
+    }
 }
