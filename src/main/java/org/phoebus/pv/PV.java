@@ -203,7 +203,10 @@ abstract public class PV
      *  @see PV#write(Object, PVWriteListener)
      *  @exception Exception on error
      */
-    abstract public void write(final Object new_value) throws Exception;
+    public void write(final Object new_value) throws Exception
+    {
+        throw new Exception(this + " is read-only");
+    }
 
     /** Write value with confirmation
      *
