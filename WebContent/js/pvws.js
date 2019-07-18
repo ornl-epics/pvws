@@ -2,6 +2,12 @@
 class PVWS
 {
     /** Create PV Web Socket
+     * 
+     *  <p>Message handler will be called with 'update'
+     *  or 'error' message.
+     *  The 'update' will contain the complete PV value,
+     *  i.e. the merge of last known value and actual update.
+     *  
      *  @param url URL of the PV web socket, e.g. "ws://localhost:8080/pvws/pv"
      *  @param connect_handler Called with true/false when connected/disconnected
      *  @param message_handler Called with each received message

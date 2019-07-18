@@ -95,7 +95,7 @@ public class WebSocketPV
         if (PV_WRITE_SUPPORT)
             pv.write(new_value);
         else
-            throw new Exception("PV_WRITE_SUPPORT is not true");
+            throw new Exception("PV_WRITE_SUPPORT is disabled");
     }
 
     /** Close PV */
