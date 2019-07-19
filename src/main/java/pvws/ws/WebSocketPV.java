@@ -76,7 +76,7 @@ public class WebSocketPV
 
     private void handleUpdates(final VType value)
     {
-        socket.sendUpdate(name, value, last_value, last_readonly, pv.isReadonly());
+        socket.sendUpdate(name, value, last_value, last_readonly, pv.isReadonly() || !PV_WRITE_SUPPORT);
         last_value = value;
         last_readonly = pv.isReadonly();
     }
