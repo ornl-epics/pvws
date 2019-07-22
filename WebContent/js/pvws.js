@@ -53,8 +53,13 @@ class PVWS
             {
                 let bytes = toByteArray(jm.b64dbl);
                 jm.value = new Float64Array(bytes.buffer);
-                // Convert to plain array, if necessary
-                // jm.value = Array.prototype.slice.call(jm.value);
+                // Convert to plain array
+                // When keeping the Float64Array, the JSON representation
+                // will be [ "0": val0, "1": val1, ... ]
+                // instead of plain array [ val0, val1, ... ]
+                jm.value = Array.prototype.slice.call(jm.value);
+                // console.log(jm.value);
+                // console.log(JSON.stringify(jm.value));
                 delete jm.b64dbl;
             }
             else if (jm.b64int !== undefined)
@@ -62,7 +67,7 @@ class PVWS
                 let bytes = toByteArray(jm.b64int);
                 jm.value = new Int32Array(bytes.buffer);
                 // Convert to plain array, if necessary
-                // jm.value = Array.prototype.slice.call(jm.value);
+                jm.value = Array.prototype.slice.call(jm.value);
                 delete jm.b64int;
             }
                 
