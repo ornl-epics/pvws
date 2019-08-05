@@ -7,6 +7,7 @@
 <script type="text/javascript" src="js/jquery-3.3.1.js"></script>
 <script type="text/javascript" src="js/base64.js"></script>
 <script type="text/javascript" src="js/pvws.js"></script>
+<script type="text/javascript" src="js/tablesort.js"></script>
 </head>
 <body>
 
@@ -257,6 +258,7 @@ function query_sockets()
                                       .append($("<td>").text(update))
                                       .append($("<td>").html(pv_info)) );
             }
+            makeTableSortable(table, false);
             info.append(table);
             // Scroll to 'bottom' to show table
             window.scrollTo(0, 100000);
@@ -300,6 +302,7 @@ function query_pool()
                 table.append($("<tr>").append($("<td>").html(row.refs))
                                       .append($("<td>").html(row.pv)) );
             }
+            makeTableSortable(table, false);
             info.append(table);
             // Scroll to 'bottom' to show table
             window.scrollTo(0, 100000);
