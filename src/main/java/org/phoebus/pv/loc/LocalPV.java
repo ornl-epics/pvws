@@ -15,7 +15,6 @@ import org.epics.vtype.VDouble;
 import org.epics.vtype.VDoubleArray;
 import org.epics.vtype.VString;
 import org.epics.vtype.VStringArray;
-// import org.epics.vtype.VStringArray;
 import org.epics.vtype.VType;
 import org.phoebus.pv.PV;
 
@@ -103,7 +102,7 @@ public class LocalPV extends PV
             }
             notifyListenersOfValue(value);
         }
-        catch (final Exception ex)
+        catch (Exception ex)
         {
             if (new_value != null  &&  new_value.getClass().isArray())
                 throw new Exception("Failed to write " + new_value.getClass().getSimpleName() + " to " + getName(), ex);

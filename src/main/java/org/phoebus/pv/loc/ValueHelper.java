@@ -26,7 +26,6 @@ import org.epics.vtype.VEnum;
 import org.epics.vtype.VLong;
 import org.epics.vtype.VString;
 import org.epics.vtype.VStringArray;
-// import org.epics.vtype.VStringArray;
 import org.epics.vtype.VTable;
 import org.epics.vtype.VType;
 
@@ -140,7 +139,7 @@ public class ValueHelper
      */
     public static boolean haveInitialStrings(final List<String> items)
     {
-        for (final String item : items)
+        for (String item : items)
             if (item.startsWith("\""))
                 return true;
         return false;
@@ -154,7 +153,7 @@ public class ValueHelper
         if (items == null)
             return Arrays.asList("");
         final List<String> strings = new ArrayList<>(items.size());
-        for (final String item : items)
+        for (String item : items)
             if (item.startsWith("\""))
                 strings.add(item.substring(1, item.length()-1).replace("\\\"", "\""));
             else
@@ -179,7 +178,7 @@ public class ValueHelper
                 else
                     values[i] = Double.parseDouble(text);
             }
-            catch (final NumberFormatException ex)
+            catch (NumberFormatException ex)
             {
                 throw new Exception("Cannot parse number from " + items.get(i));
             }
@@ -236,7 +235,7 @@ public class ValueHelper
             {
                 initial = Integer.parseInt(items.get(0));
             }
-            catch (final NumberFormatException ex)
+            catch (NumberFormatException ex)
             {
                 throw new Exception("Cannot parse enum index", ex);
             }
@@ -296,7 +295,7 @@ public class ValueHelper
             {
                 return VDouble.of(Double.parseDouble(Objects.toString(new_value)), Alarm.none(), Time.now(), Display.none());
             }
-            catch (final NumberFormatException ex)
+            catch (NumberFormatException ex)
             {
                 // Does PV have the initial 0.0 UNDEFINED value,
                 // and the type may be changed to the first assigned data type?
@@ -315,7 +314,7 @@ public class ValueHelper
                             return VDoubleArray.of(ArrayDouble.of(numbers), Alarm.none(), Time.now(), Display.none());
                         }
                     }
-                    catch (final Exception e)
+                    catch (Exception e)
                     {
                         // Ignore, try next type
                     }
@@ -324,7 +323,7 @@ public class ValueHelper
                     if (new_value instanceof List)
                     {   // Assert each list element is a String
                         final List<String> strings = new ArrayList<>();
-                        for (final Object item : (List<?>)new_value)
+                        for (Object item : (List<?>)new_value)
                             strings.add(Objects.toString(item));
                         return VStringArray.of(strings, Alarm.none(), Time.now());
                     }
@@ -341,7 +340,7 @@ public class ValueHelper
             {
                 return VLong.of((long) Double.parseDouble(Objects.toString(new_value)), Alarm.none(), Time.now(), Display.none());
             }
-            catch (final NumberFormatException ex)
+            catch (NumberFormatException ex)
             {
                 throw new Exception("Cannot parse number from '" + new_value + "'");
             }
@@ -381,7 +380,7 @@ public class ValueHelper
             if (new_value instanceof List)
             {   // Assert each list element is a String
                 final List<String> strings = new ArrayList<>();
-                for (final Object item : (List<?>)new_value)
+                for (Object item : (List<?>)new_value)
                     strings.add(Objects.toString(item));
                 return VStringArray.of(strings, Alarm.none(), Time.now());
             }

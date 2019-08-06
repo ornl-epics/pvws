@@ -70,7 +70,7 @@ public class PVPool
             for (final PVFactory factory : ServiceLoader.load(PVFactory.class))
             {
                 final String type = factory.getType();
-                logger.log(Level.CONFIG, "PV type " + type + ":// provided by " + factory);
+                logger.log(Level.WARNING, "PV type " + type + ":// provided by " + factory);
                 factories.put(type, factory);
             }
         }

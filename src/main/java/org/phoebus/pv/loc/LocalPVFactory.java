@@ -18,7 +18,6 @@ import org.epics.vtype.VEnum;
 import org.epics.vtype.VLong;
 import org.epics.vtype.VString;
 import org.epics.vtype.VStringArray;
-// import org.epics.vtype.VStringArray;
 import org.epics.vtype.VTable;
 import org.epics.vtype.VType;
 import org.phoebus.pv.PV;
