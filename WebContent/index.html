@@ -126,7 +126,11 @@ Send the following type of message to write a value to a subscribed PV:
 <input type="button" value="Clear">
 
 
-<h1>Socket and PV Pool Info</h1>
+<h1>Info</h1>
+<p>
+The servlet <span id="info_url" class="url">ws://...</span>
+returns JSON with general server info.
+</p>
 <p>
 The servlet <span id="socket_url" class="url">ws://...</span>
 returns JSON with details on all active web sockets
@@ -155,6 +159,7 @@ if (window.location.protocol == "https:")
 else
     wsurl = "ws://" + wsurl
 jQuery("#url").html(wsurl);
+jQuery("#info_url").html(window.location.href + "info");
 jQuery("#socket_url").html(window.location.href + "socket");
 jQuery("#pool_url").html(window.location.href + "pool");
 
@@ -210,10 +215,6 @@ jQuery("input[type=button][value=Echo]")       .click(() =>
 });
 
 jQuery("input[type=button][value=Clear]")      .click(() => jQuery("#messages").val("") );
-
-// Once the page loads, open the WS
-jQuery(() => pvws.open());
-
 
 function query_sockets()
 {
@@ -310,6 +311,50 @@ function query_pool()
         error: (xhr, status, error) => jQuery("#info").html("No Info: " + status),        
     });
 }
+
+function show_server_info()
+{
+    jQuery("#info").html("Fetching Server info...");
+    jQuery.ajax(
+    {
+        url: "info",
+        method: "GET",
+        dataType: "json",
+        success: data =>
+        {
+            let info = jQuery("#info");
+            
+            console.log(data);
+            
+            // Clear
+            info.html("");
+            
+            // Build table
+            let table = jQuery("<table>");
+            table.append($("<tr>").append($("<th>").css("width", "15%").html("Info"))
+                                  .append($("<th>").html("Value")) );
+            table.append($("<tr>").append($("<td>").html("JRE"))
+                                  .append($("<td>").html(data.jre)) );
+            table.append($("<tr>").append($("<td>").html("Start Time"))
+                                  .append($("<td>").html(data.start_time)) );
+            info.append(table);
+            // Scroll to 'bottom' to show table
+            window.scrollTo(0, 100000);
+        },
+        error: (xhr, status, error) => jQuery("#info").html("No Info: " + status),        
+    });
+}
+
+
+//Once the page loads,...
+jQuery(() =>
+{
+    // Open the WS
+    pvws.open();
+    
+    // Show server info
+    show_server_info();
+});
 
 
 </script>

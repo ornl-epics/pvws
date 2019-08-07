@@ -6,18 +6,14 @@
  ******************************************************************************/
 package pvws.servlets;
 
-import static pvws.PVWebSocketContext.json_factory;
 import static pvws.PVWebSocketContext.logger;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Objects;
 import java.util.logging.Level;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -31,16 +27,14 @@ import pvws.ws.WebSocketPV;
  *  @author Kay Kasemir
  */
 @WebServlet("/socket/*")
-public class SocketServlet extends HttpServlet
+public class SocketServlet extends JSONServlet
 {
 	private static final long serialVersionUID = 1L;
 
 	/** GET /socket : Return info about all sockets and their PVs */
 	@Override
-    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
+    protected void writeJson(final JsonGenerator g) throws IOException
 	{
-        final ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        final JsonGenerator g = json_factory.createGenerator(buf);
         g.writeStartObject();
         g.writeArrayFieldStart("sockets");
         for (final WebSocket socket : PVWebSocketContext.getSockets())
@@ -65,11 +59,6 @@ public class SocketServlet extends HttpServlet
         }
         g.writeEndArray();
         g.writeEndObject();
-        g.flush();
-
-        response.setContentType("application/json");
-        final PrintWriter writer = response.getWriter();
-        writer.append(buf.toString());
 	}
 
     /** DELETE /socket/ID : Close socket and its PVs */

@@ -6,17 +6,9 @@
  ******************************************************************************/
 package pvws.servlets;
 
-import static pvws.PVWebSocketContext.json_factory;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 
-import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.phoebus.pv.PV;
 import org.phoebus.pv.PVPool;
@@ -28,16 +20,14 @@ import com.fasterxml.jackson.core.JsonGenerator;
  *  @author Kay Kasemir
  */
 @WebServlet("/pool")
-public class PoolServlet extends HttpServlet
+public class PoolServlet extends JSONServlet
 {
 	private static final long serialVersionUID = 1L;
 
 	/** GET /pool : Return info PVs in pool */
 	@Override
-    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
+    protected void writeJson(final JsonGenerator g) throws IOException
 	{
-        final ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        final JsonGenerator g = json_factory.createGenerator(buf);
         g.writeStartArray();
         for (final ReferencedEntry<PV> ref : PVPool.getPVReferences())
         {
@@ -47,10 +37,5 @@ public class PoolServlet extends HttpServlet
             g.writeEndObject();
         }
         g.writeEndArray();
-        g.flush();
-
-        response.setContentType("application/json");
-        final PrintWriter writer = response.getWriter();
-        writer.append(buf.toString());
 	}
 }

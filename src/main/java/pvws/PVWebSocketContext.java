@@ -6,6 +6,7 @@
  ******************************************************************************/
 package pvws;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -38,6 +39,8 @@ public class PVWebSocketContext implements ServletContextListener
 
     private static final Set<WebSocket> sockets = Collections.newSetFromMap(new ConcurrentHashMap<WebSocket, Boolean>());
 
+    public static Instant start_time;
+
     @Override
     public void contextInitialized(final ServletContextEvent ev)
     {
@@ -47,6 +50,7 @@ public class PVWebSocketContext implements ServletContextListener
         logger.log(Level.INFO, context.getContextPath() + " started");
         logger.log(Level.INFO, "===========================================");
 
+        start_time = Instant.now();
     }
 
     /** @param socket {@link WebSocket} to track */
