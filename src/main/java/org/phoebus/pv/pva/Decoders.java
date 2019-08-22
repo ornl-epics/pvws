@@ -192,7 +192,7 @@ public class Decoders
             boolean allOK = true;
             try {
                 String.format(printfFormat, 0.0);
-            } catch (Throwable th) {
+            } catch (final Throwable th) {
                 allOK = false;
             }
             // accept it if all is OK
@@ -323,8 +323,7 @@ public class Decoders
 
         final PVAStructure section = struct.get("value");
         final int value = ((PVAInt)section.get("index")).get();
-
-        final PVAStringArray choices = struct.get("choices");
+        final PVAStringArray choices = section.get("choices");
 
         return VEnum.of(value, EnumDisplay.of(choices.get()), alarm, time);
     }
