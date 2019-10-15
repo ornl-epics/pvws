@@ -7,6 +7,7 @@
 package pvws.servlets;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.servlet.annotation.WebServlet;
 
@@ -30,6 +31,16 @@ public class InfoServlet extends JSONServlet
         g.writeStartObject();
         g.writeStringField("start_time", TimestampFormats.SECONDS_FORMAT.format(PVWebSocketContext.start_time));
         g.writeStringField("jre", System.getProperty("java.vendor") + " " + System.getProperty("java.version"));
+
+        g.writeArrayFieldStart("env");
+        for (final Map.Entry<String, String> entry : System.getenv().entrySet())
+        {
+            g.writeStartObject();
+            g.writeStringField(entry.getKey(), entry.getValue());
+            g.writeEndObject();
+        }
+        g.writeEndArray();
+
         g.writeEndObject();
     }
 }
