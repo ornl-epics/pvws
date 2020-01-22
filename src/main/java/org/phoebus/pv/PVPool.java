@@ -16,6 +16,7 @@ import java.util.ServiceLoader;
 import java.util.logging.Level;
 
 import org.phoebus.pv.RefCountMap.ReferencedEntry;
+import org.phoebus.pv.formula.FormulaPVFactory;
 
 /** Pool of {@link PV}s
  *
@@ -67,14 +68,19 @@ public class PVPool
         try
         {
             // Load all PVFactory services
-            for (final PVFactory factory : ServiceLoader.load(PVFactory.class))
+            for (PVFactory factory : ServiceLoader.load(PVFactory.class))
             {
                 final String type = factory.getType();
-                logger.log(Level.WARNING, "PV type " + type + ":// provided by " + factory);
+                logger.log(Level.CONFIG, "PV type " + type + ":// provided by " + factory);
                 factories.put(type, factory);
             }
+
+//            final PreferencesReader prefs = new PreferencesReader(PVPool.class, "/pv_preferences.properties");
+//            default_type = prefs.get(DEFAULT);
+//
+//            logger.log(Level.INFO, "Default PV type " + default_type + "://");
         }
-        catch (final Throwable ex)
+        catch (Throwable ex)
         {
             logger.log(Level.SEVERE, "Cannot initialize PVPool", ex);
         }
@@ -109,6 +115,8 @@ public class PVPool
      */
     public static PV getPV(final String name) throws Exception
     {
+        if (name.isEmpty())
+            throw new Exception("Empty PV name");
         final String[] prefix_base = analyzeName(name);
         final PVFactory factory = factories.get(prefix_base[0]);
         if (factory == null)
@@ -126,7 +134,7 @@ public class PVPool
         {
             return factory.createPV(name, base_name);
         }
-        catch (final Exception ex)
+        catch (Exception ex)
         {
             logger.log(Level.WARNING, "Cannot create PV '" + name + "'", ex);
         }
@@ -140,16 +148,25 @@ public class PVPool
     private static String[] analyzeName(final String name)
     {
         final String type, base;
-        final int sep = name.indexOf(SEPARATOR);
-        if (sep > 0)
-        {
-            type = name.substring(0, sep);
-            base = name.substring(sep+SEPARATOR.length());
+
+        if (name.startsWith("="))
+        {   // Special handling of equations, treating "=...." as "eq://...."
+            type = FormulaPVFactory.TYPE;
+            base = name.substring(1);
         }
         else
         {
-            type = default_type;
-            base = name;
+            final int sep = name.indexOf(SEPARATOR);
+            if (sep > 0)
+            {
+                type = name.substring(0, sep);
+                base = name.substring(sep+SEPARATOR.length());
+            }
+            else
+            {
+                type = default_type;
+                base = name;
+            }
         }
         return new String[] { type, base };
     }
