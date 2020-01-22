@@ -70,6 +70,8 @@ public class SimPVFactory implements PVFactory
             return NoiseWavePV.forParameters(name, parseDoubles(parameters));
         else if (func.equals("flipflop"))
             return FlipFlopPV.forParameters(name, parseDoubles(parameters));
+        else if (func.equals("const"))
+            return ConstPV.forParameters(name, parameters);
         else
             throw new Exception("Unknown simulated PV " + name);
     }
