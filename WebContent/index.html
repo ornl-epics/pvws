@@ -150,6 +150,7 @@ returns JSON with a listing of all PVs in the PV connection pool.
 
 <hr>
 <div id="versions">
+2020-07-08 '/socket' gives array sizes<br>
 2019-08-05 Write support<br>
 2019-07-04 Initial version presented at EPICS Meeting<br>
 </div>
@@ -249,15 +250,14 @@ function query_sockets()
                 if (id != 'None')
                     id = id + '<input type="button" value="x" onclick="closeSocket(\'' + sock.id + '\')">';
                     
-                let i=0, pv_info = "";
+                let i=0;
+                let pv_info = jQuery("<table>");
                 for (let pv of sock.pvs)
                 {
-                    //if (pv.value.length > 100)
-                    //    pv.value = pv.value.substring(0, 100) + "...";
-                    //pv_info += pv.name + " = " + pv.value + "<br>";
-                    
                     ++i;
-                    pv_info += i + ": " + pv.name + "<br>";
+                    pv_info.append($("<tr>").append($("<td>").html(i))
+                           .append($("<td>").text(pv.name))
+                           .append($("<td>").text(pv.value)) );
                 }
                 let update = sock.last_client_message == 0 ? "-" : new Date(sock.last_client_message);
                 table.append($("<tr>").append($("<td>").html(id))

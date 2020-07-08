@@ -17,6 +17,9 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.epics.vtype.Array;
+import org.epics.vtype.VType;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import pvws.PVWebSocketContext;
@@ -47,7 +50,14 @@ public class SocketServlet extends JSONServlet
             {
                 g.writeStartObject();
                 g.writeStringField("name", pv.getName());
-                g.writeStringField("value", Objects.toString(pv.getLastValue()));
+                // Add representation of value.
+                final VType value = pv.getLastValue();
+                if (value instanceof Array)
+                {   // For arrays, show size, not actual elements
+                    g.writeStringField("value", value.getClass().getName() + ", size " + ((Array) value).getSizes());
+                }
+                else
+                    g.writeStringField("value", Objects.toString(pv.getLastValue()));
                 g.writeEndObject();
             }
             g.writeEndArray();
