@@ -1,13 +1,18 @@
 /*******************************************************************************
- * Copyright (c) 2019 Oak Ridge National Laboratory.
+ * Copyright (c) 2019-2020 Oak Ridge National Laboratory.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
  ******************************************************************************/
 package pvws.ws;
 
-import java.util.concurrent.TimeUnit;
+import static pvws.PVWebSocketContext.logger;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+
+import org.epics.vtype.Array;
 import org.epics.vtype.VType;
 import org.phoebus.pv.PV;
 import org.phoebus.pv.PVPool;
@@ -25,13 +30,17 @@ public class WebSocketPV
     /** Value throttle */
     private static final int THROTTLE_MS;
 
+    /** Array value throttle */
+    private static final int ARRAY_THROTTLE_MS;
+
     /** Support writing? */
     private static final boolean PV_WRITE_SUPPORT;
 
     private final String name;
     private final WebSocket socket;
     private volatile PV pv;
-    private volatile Disposable subscription;
+    private AtomicReference<Disposable> subscription = new AtomicReference<>(), array_subscription = new AtomicReference<>();
+    private volatile boolean subscribed_for_array = false;
     private volatile VType last_value = null;
     private volatile boolean last_readonly = true;
 
@@ -42,6 +51,12 @@ public class WebSocketPV
             THROTTLE_MS = 1000;
         else
             THROTTLE_MS = Integer.parseInt(spec);
+
+        spec = System.getenv("PV_ARRAY_THROTTLE_MS");
+        if (spec == null)
+            ARRAY_THROTTLE_MS = 10000;
+        else
+            ARRAY_THROTTLE_MS = Integer.parseInt(spec);
 
         spec = System.getenv("PV_WRITE_SUPPORT");
         PV_WRITE_SUPPORT = "true".equalsIgnoreCase(spec);
@@ -68,14 +83,45 @@ public class WebSocketPV
      */
     public void start() throws Exception
     {
+        subscribed_for_array = false;
         pv = PVPool.getPV(name);
-        subscription = pv.onValueEvent()
-                         .throttleLatest(THROTTLE_MS, TimeUnit.MILLISECONDS)
-                         .subscribe(this::handleUpdates);
+        // Subscribe at the 'normal' throttling rate.
+        subscription.set(pv.onValueEvent()
+                           .throttleLatest(THROTTLE_MS, TimeUnit.MILLISECONDS)
+                           .subscribe(this::handleUpdates));
     }
 
     private void handleUpdates(final VType value)
     {
+        if (value instanceof Array  && !subscribed_for_array)
+        {
+            // If the data turns out to be array values,
+            // re-subscribe at a (slower) 'array' rate.
+            // Problem is that subscribe() above may end up calling this update handler
+            // before 'subscription' is assigned,
+            // so we won't be able to cancel that subscription right away.
+            // Instead, we'll create a separate 'array_subscription',
+            // and in a later update we then dispose the initial subscription.
+            final Array array = (Array) value;
+            logger.log(Level.FINE, () -> "Re-subscribing to array " + name + ", " + array.getSizes());
+
+            subscribed_for_array = true;
+            array_subscription.set(pv.onValueEvent()
+                                     .throttleLatest(ARRAY_THROTTLE_MS, TimeUnit.MILLISECONDS)
+                                     .subscribe(this::handleUpdates));
+            return;
+        }
+
+        if (subscribed_for_array)
+        {
+            final Disposable sub = subscription.getAndSet(null);
+            if (sub != null)
+            {
+                logger.log(Level.FINE, () -> "Closing non-array subscription for " + name);
+                sub.dispose();
+            }
+        }
+
         socket.sendUpdate(name, value, last_value, last_readonly, pv.isReadonly() || !PV_WRITE_SUPPORT);
         last_value = value;
         last_readonly = pv.isReadonly();
@@ -101,8 +147,20 @@ public class WebSocketPV
     /** Close PV */
     public void dispose()
     {
-        subscription.dispose();
-        subscription = null;
+        Disposable sub = array_subscription.getAndSet(null);
+        if (sub != null)
+        {
+            logger.log(Level.FINE, () -> "Closing array subscription for " + name);
+            sub.dispose();
+        }
+
+        sub = subscription.getAndSet(null);
+        if (sub != null)
+        {
+            logger.log(Level.FINE, () -> "Closing subscription for " + name);
+            sub.dispose();
+        }
+
         PVPool.releasePV(pv);
         pv = null;
     }

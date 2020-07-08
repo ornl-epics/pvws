@@ -28,8 +28,9 @@ Set the following environment variables, for example in `$CATALINA_HOME/bin/sete
 
  * `EPICS_CA_ADDR_LIST`: CA address list.
  * `EPICS_CA_MAX_ARRAY_BYTES`: CA array size.
- * `PV_THROTTLE_MS`: Throttle-latest period in milliseconds.
- * `PV_WRITE_SUPPORT`: Set to `true` to enable writing.
+ * `PV_THROTTLE_MS`: Throttle-latest period in milliseconds (default: 1000).
+ * `PV_ARRAY_THROTTLE_MS`: .. for arrays (default: 10000).
+ * `PV_WRITE_SUPPORT`: Set to `true` to enable writing (default: false).
  
 When enabling write access, actual write access is still controlled
 on a per-PV basis by Channel Access or PV Access security,
