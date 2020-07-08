@@ -60,6 +60,10 @@ public class WebSocketPV
 
         spec = System.getenv("PV_WRITE_SUPPORT");
         PV_WRITE_SUPPORT = "true".equalsIgnoreCase(spec);
+
+        logger.log(Level.INFO, "PV_THROTTLE_MS = " + THROTTLE_MS);
+        logger.log(Level.INFO, "PV_ARRAY_THROTTLE_MS = " + ARRAY_THROTTLE_MS);
+        logger.log(Level.INFO, "PV_WRITE_SUPPORT = " + PV_WRITE_SUPPORT);
     }
 
     /** @param name PV name
