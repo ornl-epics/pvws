@@ -34,14 +34,22 @@ public class SocketServlet extends JSONServlet
 {
 	private static final long serialVersionUID = 1L;
 
-	/** GET /socket : Return info about all sockets and their PVs */
+	/** GET /socket : Return info about all sockets and their PVs
+	 *
+	 *  <p>Use /socket/{id} to only get into about selected socket ID.
+	 */
 	@Override
     protected void writeJson(final HttpServletRequest request, final JsonGenerator g) throws IOException
 	{
+	    final String selected_id = request.getPathInfo() == null
+	                             ? null
+	                             : request.getPathInfo().substring(1);
         g.writeStartObject();
         g.writeArrayFieldStart("sockets");
         for (final WebSocket socket : PVWebSocketContext.getSockets())
         {
+            if (selected_id != null  &&  !socket.getId().equals(selected_id))
+                continue;
             g.writeStartObject();
             g.writeStringField("id", socket.getId());
             g.writeNumberField("created", socket.getCreateTime());
