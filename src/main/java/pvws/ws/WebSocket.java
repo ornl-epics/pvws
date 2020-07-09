@@ -48,6 +48,9 @@ import pvws.PVWebSocketContext;
 @ServerEndpoint(value="/pv")
 public class WebSocket
 {
+    /** Time when web socket was created */
+    private long created = System.currentTimeMillis();
+
     /** Track when the last message was received by web client */
     private volatile long last_client_message = 0;
 
@@ -86,6 +89,12 @@ public class WebSocket
             return "(" + id + ")";
         else
             return id;
+    }
+
+    /** @return Timestamp (ms since epoch) when socket was created */
+    public long getCreateTime()
+    {
+        return created;
     }
 
     /** @return Timestamp (ms since epoch) of last client message */
