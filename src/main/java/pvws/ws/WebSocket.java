@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 import javax.websocket.CloseReason;
@@ -53,6 +54,9 @@ public class WebSocket
 
     /** Track when the last message was received by web client */
     private volatile long last_client_message = 0;
+
+    /** Is the queue full? */
+    private final AtomicBoolean stuffed = new AtomicBoolean();
 
     /** Queue of messages for the client.
      *
@@ -124,8 +128,16 @@ public class WebSocket
 
     private void queueMessage(final String message)
     {
-        if (! write_queue.offer(message))
-            logger.log(Level.WARNING, () -> "Cannot queue message '" + shorten(message) + "' for " + id);
+        if (write_queue.offer(message))
+        {   // Queued OK. Is this a recovery from stuffed queue?
+            if (stuffed.getAndSet(false))
+                logger.log(Level.WARNING, () -> "Un-stuffed message queue for " + id);
+        }
+        else
+        {   // Log, but only for the first message to prevent flooding the log
+            if (stuffed.getAndSet(true) == false)
+                logger.log(Level.WARNING, () -> "Cannot queue message '" + shorten(message) + "' for " + id);
+        }
     }
 
     private void writeQueuedMessages()
@@ -377,18 +389,28 @@ public class WebSocket
     public void dispose()
     {
         // Exit write thread
-        queueMessage(EXIT_MESSAGE);
-        if (! pvs.isEmpty())
+        try
         {
-            logger.log(Level.FINE, "Disposing web socket PVs:");
-            for (final WebSocketPV pv : pvs.values())
+            // Drop queued messages (which might be stuffed):
+            // We're closing and just need the EXIT_MESSAGE
+            write_queue.clear();
+            queueMessage(EXIT_MESSAGE);
+            if (! pvs.isEmpty())
             {
-                logger.log(Level.FINE, () -> "Closing " + pv);
-                pv.dispose();
+                logger.log(Level.FINE, "Disposing web socket PVs:");
+                for (final WebSocketPV pv : pvs.values())
+                {
+                    logger.log(Level.FINE, () -> "Closing " + pv);
+                    pv.dispose();
+                }
+                pvs.clear();
             }
-            pvs.clear();
+            PVWebSocketContext.unregister(this);
+            session = null;
         }
-        PVWebSocketContext.unregister(this);
-        session = null;
+        catch (Throwable ex)
+        {
+            logger.log(Level.WARNING, "Error disposing " + getId(), ex);
+        }
     }
 }
