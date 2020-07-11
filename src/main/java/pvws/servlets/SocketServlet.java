@@ -54,6 +54,7 @@ public class SocketServlet extends JSONServlet
             g.writeStringField("id", socket.getId());
             g.writeNumberField("created", socket.getCreateTime());
             g.writeNumberField("last_client_message", socket.getLastClientMessage());
+            g.writeNumberField("last_message_sent", socket.getLastMessageSent());
             g.writeNumberField("queued", socket.getQueuedMessageCount());
 
             g.writeArrayFieldStart("pvs");

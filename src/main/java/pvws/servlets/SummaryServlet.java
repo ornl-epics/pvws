@@ -42,6 +42,7 @@ public class SummaryServlet extends JSONServlet
             g.writeStringField("id", socket.getId());
             g.writeNumberField("created", socket.getCreateTime());
             g.writeNumberField("last_client_message", socket.getLastClientMessage());
+            g.writeNumberField("last_message_sent", socket.getLastMessageSent());
             g.writeNumberField("queued", socket.getQueuedMessageCount());
 
             int pvs = 0, arrays = 0, max_size = 0;

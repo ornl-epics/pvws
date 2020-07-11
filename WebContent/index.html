@@ -155,6 +155,7 @@ returns JSON with a listing of all PVs in the PV connection pool.
 
 <hr>
 <div id="versions">
+2020-07-11 Track time of last message sent<br>
 2020-07-10 Only log when queue enters/leaves stuffed state<br>
 2020-07-09 Reduce array displays in logging<br>
 2020-07-08 Separate rate for array PVs<br>
@@ -250,6 +251,7 @@ function query_summary()
             table.append($("<tr>").append($("<th>").text("ID"))
                                   .append($("<th>").text("Created"))
                                   .append($("<th>").text("Last Client Message"))
+                                  .append($("<th>").text("Last Message Sent"))
                                   .append($("<th>").text("Queue Size"))
                                   .append($("<th>").text("PVs"))
                                   .append($("<th>").text("Arrays"))
@@ -263,9 +265,11 @@ function query_summary()
                     
                 let created = sock.created == 0 ? "-" : new Date(sock.created);
                 let update = sock.last_client_message == 0 ? "-" : new Date(sock.last_client_message);
+                let sent = sock.last_message_sent == 0 ? "-" : new Date(sock.last_message_sent);
                 table.append($("<tr>").append($("<td>").html(id))
                                       .append($("<td>").text(created))
                                       .append($("<td>").text(update))
+                                      .append($("<td>").text(sent))
                                       .append($("<td>").text(sock.queued))
                                       .append($("<td>").text(sock.pvs))
                                       .append($("<td>").text(sock.arrays))
@@ -302,6 +306,7 @@ function query_sockets(...id)
             table.append($("<tr>").append($("<th>").text("ID"))
                                   .append($("<th>").text("Created"))
                                   .append($("<th>").text("Last Client Message"))
+                                  .append($("<th>").text("Last Message Sent"))
                                   .append($("<th>").text("Queue Size"))
                                   .append($("<th>").text("PVs")) );
             // .. Rows
@@ -322,9 +327,11 @@ function query_sockets(...id)
                 }
                 let created = sock.created == 0 ? "-" : new Date(sock.created);
                 let update = sock.last_client_message == 0 ? "-" : new Date(sock.last_client_message);
+                let sent = sock.last_message_sent == 0 ? "-" : new Date(sock.last_message_sent);
                 table.append($("<tr>").append($("<td>").html(id))
                                       .append($("<td>").text(created))
                                       .append($("<td>").text(update))
+                                      .append($("<td>").text(sent))
                                       .append($("<td>").text(sock.queued))
                                       .append($("<td>").html(pv_info)) );
             }

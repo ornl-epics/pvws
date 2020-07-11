@@ -55,6 +55,9 @@ public class WebSocket
     /** Track when the last message was received by web client */
     private volatile long last_client_message = 0;
 
+    /** Track when the last message was sent to web client */
+    private volatile long last_message_sent = 0;
+
     /** Is the queue full? */
     private final AtomicBoolean stuffed = new AtomicBoolean();
 
@@ -107,6 +110,12 @@ public class WebSocket
         return last_client_message;
     }
 
+    /** @return Timestamp (ms since epoch) of last message sent to client */
+    public long getLastMessageSent()
+    {
+        return last_message_sent;
+    }
+
     /** @return {@link WebSocketPV}s */
     public Collection<WebSocketPV> getPVs()
     {
@@ -128,6 +137,10 @@ public class WebSocket
 
     private void queueMessage(final String message)
     {
+        // Ignore messages after 'dispose'
+        if (session == null)
+            return;
+
         if (write_queue.offer(message))
         {   // Queued OK. Is this a recovery from stuffed queue?
             if (stuffed.getAndSet(false))
@@ -142,38 +155,46 @@ public class WebSocket
 
     private void writeQueuedMessages()
     {
-        while (true)
+        try
         {
-            final String message;
-            try
+            while (true)
             {
-                message = write_queue.take();
-            }
-            catch (final InterruptedException ex)
-            {
-                return;
-            }
+                final String message;
+                try
+                {
+                    message = write_queue.take();
+                }
+                catch (final InterruptedException ex)
+                {
+                    return;
+                }
 
-            // Check if we should exit the thread
-            if (message == EXIT_MESSAGE)
-            {
-                logger.log(Level.FINE, () -> "Exiting write thread " + id);
-                return;
-            }
+                // Check if we should exit the thread
+                if (message == EXIT_MESSAGE)
+                {
+                    logger.log(Level.FINE, () -> "Exiting write thread " + id);
+                    return;
+                }
 
-            final Session safe_session = session;
-            try
-            {
-                if (safe_session == null)
-                    throw new Exception("No session");
-                if (! safe_session.isOpen())
-                    throw new Exception("Session closed");
-                safe_session.getBasicRemote().sendText(message);
+                final Session safe_session = session;
+                try
+                {
+                    if (safe_session == null)
+                        throw new Exception("No session");
+                    if (! safe_session.isOpen())
+                        throw new Exception("Session closed");
+                    safe_session.getBasicRemote().sendText(message);
+                    last_message_sent = System.currentTimeMillis();
+                }
+                catch (final Exception ex)
+                {
+                    logger.log(Level.WARNING, ex, () -> "Cannot write '" + shorten(message) + "' for " + id);
+                }
             }
-            catch (final Exception ex)
-            {
-                logger.log(Level.WARNING, ex, () -> "Cannot write '" + shorten(message) + "' for " + id);
-            }
+        }
+        catch (Throwable ex)
+        {
+            logger.log(Level.WARNING, "Write thread error for " + id, ex);
         }
     }
 
