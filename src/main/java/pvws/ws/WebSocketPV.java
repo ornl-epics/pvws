@@ -165,7 +165,9 @@ public class WebSocketPV
             sub.dispose();
         }
 
-        PVPool.releasePV(pv);
+        // PV may never have been created for invalid PV name...
+        if (pv != null)
+            PVPool.releasePV(pv);
         pv = null;
     }
 
