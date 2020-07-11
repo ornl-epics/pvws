@@ -212,6 +212,7 @@ public class WebSocket
         logger.log(Level.FINE, () -> "Opening web socket " + session.getRequestURI() + " ID " + session.getId());
         this.session = session;
         id = session.getId();
+        write_thread.setName("PVWS Write Thread " + id);
         trackClientUpdate();
     }
 
