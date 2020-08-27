@@ -32,6 +32,7 @@ public class WebSocketPV
     private final WebSocket socket;
     private volatile PV pv;
     private volatile Disposable subscription;
+    private volatile Disposable subscription_access;
     private volatile VType last_value = null;
     private volatile boolean last_readonly = true;
 
@@ -72,6 +73,9 @@ public class WebSocketPV
         subscription = pv.onValueEvent()
                          .throttleLatest(THROTTLE_MS, TimeUnit.MILLISECONDS)
                          .subscribe(this::handleUpdates);
+        subscription_access = pv.onAccessRightsEvent()
+                         .throttleLatest(THROTTLE_MS, TimeUnit.MILLISECONDS)
+                         .subscribe(this::handleUpdates_access);
     }
 
     private void handleUpdates(final VType value)
@@ -80,6 +84,14 @@ public class WebSocketPV
         last_value = value;
         last_readonly = pv.isReadonly();
     }
+    
+    private void handleUpdates_access(final Boolean readonly)
+    {
+        socket.sendUpdate(name, last_value, last_value, last_readonly, pv.isReadonly() || !PV_WRITE_SUPPORT);
+        last_readonly = pv.isReadonly();
+    }
+
+
 
     /** @return Most recent value or null */
     public VType getLastValue()
@@ -103,6 +115,8 @@ public class WebSocketPV
     {
         subscription.dispose();
         subscription = null;
+        subscription_access.dispose();
+        subscription_access = null;
         PVPool.releasePV(pv);
         pv = null;
     }
