@@ -132,6 +132,10 @@ The servlet <span id="info_url" class="url">ws://...</span>
 returns JSON with general server info.
 </p>
 <p>
+The servlet <span id="summary_url" class="url">ws://...</span>
+returns JSON with a summary of all active web sockets.
+</p>
+<p>
 The servlet <span id="socket_url" class="url">ws://...</span>
 returns JSON with details on all active web sockets
 and their PVs.
@@ -144,12 +148,17 @@ returns JSON with a listing of all PVs in the PV connection pool.
 <div id="info"></div>
 
 <p>
+<input type="button" value="Summary" onclick="query_summary()">
 <input type="button" value="Sockets" onclick="query_sockets()">
 <input type="button" value="PV Pool" onclick="query_pool()">
 </p>
 
 <hr>
 <div id="versions">
+2020-07-11 Track time of last message sent<br>
+2020-07-10 Only log when queue enters/leaves stuffed state<br>
+2020-07-09 Reduce array displays in logging<br>
+2020-07-08 Separate rate for array PVs<br>
 2019-08-05 Write support<br>
 2019-07-04 Initial version presented at EPICS Meeting<br>
 </div>
@@ -166,6 +175,7 @@ else
     wsurl = "ws://" + wsurl
 jQuery("#url").html(wsurl);
 jQuery("#info_url").html(window.location.href + "info");
+jQuery("#summary_url").html(window.location.href + "summary");
 jQuery("#socket_url").html(window.location.href + "socket");
 jQuery("#pool_url").html(window.location.href + "pool");
 
@@ -222,12 +232,12 @@ jQuery("input[type=button][value=Echo]")       .click(() =>
 
 jQuery("input[type=button][value=Clear]")      .click(() => jQuery("#messages").val("") );
 
-function query_sockets()
+function query_summary()
 {
-    jQuery("#info").html("Fetching socket info...");
+    jQuery("#info").html("Fetching summary ...");
     jQuery.ajax(
     {
-        url: "socket",
+        url: "summary",
         method: "GET",
         dataType: "json",
         success: data =>
@@ -239,30 +249,90 @@ function query_sockets()
             // Build table: Header
             let table = jQuery("<table>");
             table.append($("<tr>").append($("<th>").text("ID"))
-                                  .append($("<th>").text("Queue Size"))
+                                  .append($("<th>").text("Created"))
                                   .append($("<th>").text("Last Client Message"))
+                                  .append($("<th>").text("Last Message Sent"))
+                                  .append($("<th>").text("Queue Size"))
+                                  .append($("<th>").text("PVs"))
+                                  .append($("<th>").text("Arrays"))
+                                  .append($("<th>").text("Max. Array Size")) );
+            // .. Rows
+            for (let sock of data.sockets)
+            {
+                let id = sock.id;
+                if (id != 'None')
+                    id = id + '<input type="button" value="?" onclick="query_sockets(\'' + sock.id + '\')">';
+                    
+                let created = sock.created == 0 ? "-" : new Date(sock.created);
+                let update = sock.last_client_message == 0 ? "-" : new Date(sock.last_client_message);
+                let sent = sock.last_message_sent == 0 ? "-" : new Date(sock.last_message_sent);
+                table.append($("<tr>").append($("<td>").html(id))
+                                      .append($("<td>").text(created))
+                                      .append($("<td>").text(update))
+                                      .append($("<td>").text(sent))
+                                      .append($("<td>").text(sock.queued))
+                                      .append($("<td>").text(sock.pvs))
+                                      .append($("<td>").text(sock.arrays))
+                                      .append($("<td>").text(sock.max_size)) );
+            }
+            makeTableSortable(table, false);
+            info.append(table);
+            // Scroll to 'bottom' to show table
+            window.scrollTo(0, 100000);
+        },
+        error: (xhr, status, error) => jQuery("#info").html("No Info: " + status),        
+    });
+}
+
+function query_sockets(...id)
+{
+    let url = id === undefined
+            ? "socket"
+            : "socket/" + id[0];
+    jQuery("#info").html("Fetching socket info...");
+    jQuery.ajax(
+    {
+        url: url,
+        method: "GET",
+        dataType: "json",
+        success: data =>
+        {
+            let info = jQuery("#info");
+            // Clear
+            info.html("");
+            
+            // Build table: Header
+            let table = jQuery("<table>");
+            table.append($("<tr>").append($("<th>").text("ID"))
+                                  .append($("<th>").text("Created"))
+                                  .append($("<th>").text("Last Client Message"))
+                                  .append($("<th>").text("Last Message Sent"))
+                                  .append($("<th>").text("Queue Size"))
                                   .append($("<th>").text("PVs")) );
             // .. Rows
             for (let sock of data.sockets)
             {
                 let id = sock.id;
                 if (id != 'None')
-                    id = id + '<input type="button" value="x" onclick="closeSocket(\'' + sock.id + '\')">';
+                    id = id + '<input type="button" value="x" style="color:red" onclick="closeSocket(\'' + sock.id + '\')">';
                     
-                let i=0, pv_info = "";
+                let i=0;
+                let pv_info = jQuery("<table>");
                 for (let pv of sock.pvs)
                 {
-                    //if (pv.value.length > 100)
-                    //    pv.value = pv.value.substring(0, 100) + "...";
-                    //pv_info += pv.name + " = " + pv.value + "<br>";
-                    
                     ++i;
-                    pv_info += i + ": " + pv.name + "<br>";
+                    pv_info.append($("<tr>").append($("<td>").html(i))
+                           .append($("<td>").text(pv.name))
+                           .append($("<td>").text(pv.value)) );
                 }
+                let created = sock.created == 0 ? "-" : new Date(sock.created);
                 let update = sock.last_client_message == 0 ? "-" : new Date(sock.last_client_message);
+                let sent = sock.last_message_sent == 0 ? "-" : new Date(sock.last_message_sent);
                 table.append($("<tr>").append($("<td>").html(id))
-                                      .append($("<td>").text(sock.queued))
+                                      .append($("<td>").text(created))
                                       .append($("<td>").text(update))
+                                      .append($("<td>").text(sent))
+                                      .append($("<td>").text(sock.queued))
                                       .append($("<td>").html(pv_info)) );
             }
             makeTableSortable(table, false);
@@ -329,8 +399,6 @@ function show_server_info()
         success: data =>
         {
             let info = jQuery("#info");
-            
-            console.log(data);
             
             // Clear
             info.html("");

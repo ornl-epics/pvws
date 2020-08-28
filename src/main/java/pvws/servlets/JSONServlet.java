@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Oak Ridge National Laboratory.
+ * Copyright (c) 2019-2020 Oak Ridge National Laboratory.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -32,7 +32,7 @@ public abstract class JSONServlet extends HttpServlet
 	{
         final ByteArrayOutputStream buf = new ByteArrayOutputStream();
         final JsonGenerator g = json_factory.createGenerator(buf);
-        writeJson(g);
+        writeJson(request, g);
         g.flush();
 
         response.setContentType("application/json");
@@ -42,8 +42,9 @@ public abstract class JSONServlet extends HttpServlet
 
 	/** Derived class implements this to fill the JSON that's returned by servlet
 	 *
+	 *  @param request {@link HttpServletRequest}
 	 *  @param g {@link JsonGenerator}
 	 *  @throws IOException on error
 	 */
-    abstract protected void writeJson(final JsonGenerator g) throws IOException;
+    abstract protected void writeJson(final HttpServletRequest request, final JsonGenerator g) throws IOException;
 }

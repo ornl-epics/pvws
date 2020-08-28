@@ -10,14 +10,17 @@ import static pvws.PVWebSocketContext.json_factory;
 import static pvws.PVWebSocketContext.logger;
 
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 import javax.websocket.CloseReason;
@@ -46,8 +49,17 @@ import pvws.PVWebSocketContext;
 @ServerEndpoint(value="/pv")
 public class WebSocket
 {
+    /** Time when web socket was created */
+    private long created = System.currentTimeMillis();
+
     /** Track when the last message was received by web client */
     private volatile long last_client_message = 0;
+
+    /** Track when the last message was sent to web client */
+    private volatile long last_message_sent = 0;
+
+    /** Is the queue full? */
+    private final AtomicBoolean stuffed = new AtomicBoolean();
 
     /** Queue of messages for the client.
      *
@@ -86,10 +98,22 @@ public class WebSocket
             return id;
     }
 
+    /** @return Timestamp (ms since epoch) when socket was created */
+    public long getCreateTime()
+    {
+        return created;
+    }
+
     /** @return Timestamp (ms since epoch) of last client message */
     public long getLastClientMessage()
     {
         return last_client_message;
+    }
+
+    /** @return Timestamp (ms since epoch) of last message sent to client */
+    public long getLastMessageSent()
+    {
+        return last_message_sent;
     }
 
     /** @return {@link WebSocketPV}s */
@@ -104,46 +128,73 @@ public class WebSocket
         return write_queue.size();
     }
 
+    private String shorten(final String message)
+    {
+        if (message == null  ||  message.length() < 200)
+            return message;
+        return message.substring(0, 200) + " ...";
+    }
+
     private void queueMessage(final String message)
     {
-        if (! write_queue.offer(message))
-            logger.log(Level.WARNING, "Cannot queue message " + message + " for " + id);
+        // Ignore messages after 'dispose'
+        if (session == null)
+            return;
+
+        if (write_queue.offer(message))
+        {   // Queued OK. Is this a recovery from stuffed queue?
+            if (stuffed.getAndSet(false))
+                logger.log(Level.WARNING, () -> "Un-stuffed message queue for " + id);
+        }
+        else
+        {   // Log, but only for the first message to prevent flooding the log
+            if (stuffed.getAndSet(true) == false)
+                logger.log(Level.WARNING, () -> "Cannot queue message '" + shorten(message) + "' for " + id);
+        }
     }
 
     private void writeQueuedMessages()
     {
-        while (true)
+        try
         {
-            final String message;
-            try
+            while (true)
             {
-                message = write_queue.take();
-            }
-            catch (final InterruptedException ex)
-            {
-                return;
-            }
+                final String message;
+                try
+                {
+                    message = write_queue.take();
+                }
+                catch (final InterruptedException ex)
+                {
+                    return;
+                }
 
-            // Check if we should exit the thread
-            if (message == EXIT_MESSAGE)
-            {
-                logger.log(Level.FINE, "Exiting write thread " + id);
-                return;
-            }
+                // Check if we should exit the thread
+                if (message == EXIT_MESSAGE)
+                {
+                    logger.log(Level.FINE, () -> "Exiting write thread " + id);
+                    return;
+                }
 
-            final Session safe_session = session;
-            try
-            {
-                if (safe_session == null)
-                    throw new Exception("No session");
-                if (! safe_session.isOpen())
-                    throw new Exception("Session closed");
-                safe_session.getBasicRemote().sendText(message);
+                final Session safe_session = session;
+                try
+                {
+                    if (safe_session == null)
+                        throw new Exception("No session");
+                    if (! safe_session.isOpen())
+                        throw new Exception("Session closed");
+                    safe_session.getBasicRemote().sendText(message);
+                    last_message_sent = System.currentTimeMillis();
+                }
+                catch (final Exception ex)
+                {
+                    logger.log(Level.WARNING, ex, () -> "Cannot write '" + shorten(message) + "' for " + id);
+                }
             }
-            catch (final Exception ex)
-            {
-                logger.log(Level.WARNING, "Cannot write '" + message + "'", ex);
-            }
+        }
+        catch (Throwable ex)
+        {
+            logger.log(Level.WARNING, "Write thread error for " + id, ex);
         }
     }
 
@@ -158,9 +209,10 @@ public class WebSocket
     @OnOpen
     public void onOpen(final Session session, final EndpointConfig config)
     {
-        logger.log(Level.FINE, "Opening web socket " + session.getRequestURI() + " ID " + session.getId());
+        logger.log(Level.FINE, () -> "Opening web socket " + session.getRequestURI() + " ID " + session.getId());
         this.session = session;
         id = session.getId();
+        write_thread.setName("PVWS Write Thread " + id);
         trackClientUpdate();
     }
 
@@ -168,7 +220,7 @@ public class WebSocket
     public void onClose(final Session session, final CloseReason reason)
     {
         dispose();
-        logger.log(Level.FINE, "Web socket " + id + " closed");
+        logger.log(Level.FINE, () -> "Web socket " + id + " closed");
         last_client_message = 0;
     }
 
@@ -183,7 +235,7 @@ public class WebSocket
     {
         final JsonNode node = json.path("pvs");
         if (node.isMissingNode())
-            throw new Exception("Missing 'pvs' in " + message);
+            throw new Exception("Missing 'pvs' in " + shorten(message));
         final Iterator<JsonNode> nodes = node.elements();
         final List<String> pvs = new ArrayList<String>();
         while (nodes.hasNext())
@@ -195,7 +247,7 @@ public class WebSocket
     public void onMessage(final String message, final Session session)
     {
         trackClientUpdate();
-        logger.log(Level.FINER, "Received: " + message + " on " + Thread.currentThread());
+        logger.log(Level.FINER, () -> "Received: " + shorten(message) + " on " + Thread.currentThread());
 
         try
         {
@@ -205,7 +257,7 @@ public class WebSocket
             final JsonNode json = mapper.readTree(message);
             final JsonNode node = json.path("type");
             if (node.isMissingNode())
-                throw new Exception("Missing 'type' in " + message);
+                throw new Exception("Missing 'type' in " + shorten(message));
             final String type = node.asText();
             switch (type)
             {
@@ -216,7 +268,7 @@ public class WebSocket
                 {
                     pvs.computeIfAbsent(name, n ->
                     {
-                        logger.log(Level.FINER, "Subscribe to " + name);
+                        logger.log(Level.FINER, () -> "Subscribe to " + name);
                         final WebSocketPV pv = new WebSocketPV(name, this);
                         try
                         {
@@ -236,7 +288,7 @@ public class WebSocket
                     final WebSocketPV pv = pvs.remove(name);
                     if (pv != null)
                     {
-                        logger.log(Level.FINER, "Clear " + name);
+                        logger.log(Level.FINER, () -> "Clear " + name);
                         pv.dispose();
                     }
                 }
@@ -260,12 +312,12 @@ public class WebSocket
                 {
                     JsonNode n = json.path("pv");
                     if (n.isMissingNode())
-                        throw new Exception("Missing 'pv' in " + message);
+                        throw new Exception("Missing 'pv' in " + shorten(message));
                     final String pv_name = n.asText();
 
                     n = json.path("value");
                     if (n.isMissingNode())
-                        throw new Exception("Missing 'value' in " + message);
+                        throw new Exception("Missing 'value' in " + shorten(message));
                     final Object value;
                     if (n.getNodeType() == JsonNodeType.NUMBER)
                         value = n.asDouble();
@@ -293,19 +345,23 @@ public class WebSocket
                 queueMessage(message);
                 break;
             default:
-                throw new Exception("Unknown message type: " + message);
+                throw new Exception("Unknown message type: " + shorten(message));
             }
         }
         catch (final Exception ex)
         {
-            logger.log(Level.WARNING, "Error for message " + message, ex);
+            logger.log(Level.WARNING, ex, () -> "Error for message " + shorten(message));
         }
     }
 
     @OnError
     public void onError(final Throwable ex)
     {
-        logger.log(Level.WARNING, "Web Socket error", ex);
+        // EOF is expected when web client closes/navigates to other page
+        if (ex instanceof EOFException)
+            logger.log(Level.FINE, "Web Socket closed", ex);
+        else
+            logger.log(Level.WARNING, "Web Socket error", ex);
     }
 
     /** @param name PV name for which to send an update
@@ -322,7 +378,7 @@ public class WebSocket
         }
         catch (final Exception ex)
         {
-            logger.log(Level.WARNING, "Cannot send " + name + " = " + value, ex);
+            logger.log(Level.WARNING, "Cannot send " + name + " = " + shorten(Objects.toString(value)), ex);
         }
     }
 
@@ -342,7 +398,7 @@ public class WebSocket
         }
         catch (final Exception ex)
         {
-            logger.log(Level.WARNING, "Cannot send error " + message, ex);
+            logger.log(Level.WARNING, "Cannot send error " + shorten(message), ex);
         }
     }
 
@@ -355,18 +411,28 @@ public class WebSocket
     public void dispose()
     {
         // Exit write thread
-        queueMessage(EXIT_MESSAGE);
-        if (! pvs.isEmpty())
+        try
         {
-            logger.log(Level.FINE, "Disposing web socket PVs:");
-            for (final WebSocketPV pv : pvs.values())
+            // Drop queued messages (which might be stuffed):
+            // We're closing and just need the EXIT_MESSAGE
+            write_queue.clear();
+            queueMessage(EXIT_MESSAGE);
+            if (! pvs.isEmpty())
             {
-                logger.log(Level.FINE, "Closing " + pv);
-                pv.dispose();
+                logger.log(Level.FINE, "Disposing web socket PVs:");
+                for (final WebSocketPV pv : pvs.values())
+                {
+                    logger.log(Level.FINE, () -> "Closing " + pv);
+                    pv.dispose();
+                }
+                pvs.clear();
             }
-            pvs.clear();
+            PVWebSocketContext.unregister(this);
+            session = null;
         }
-        PVWebSocketContext.unregister(this);
-        session = null;
+        catch (Throwable ex)
+        {
+            logger.log(Level.WARNING, "Error disposing " + getId(), ex);
+        }
     }
 }

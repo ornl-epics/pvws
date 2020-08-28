@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Oak Ridge National Laboratory.
+ * Copyright (c) 2019-2020 Oak Ridge National Laboratory.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -9,6 +9,7 @@ package pvws.servlets;
 import java.io.IOException;
 
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServletRequest;
 
 import org.phoebus.pv.PV;
 import org.phoebus.pv.PVPool;
@@ -26,7 +27,7 @@ public class PoolServlet extends JSONServlet
 
 	/** GET /pool : Return info PVs in pool */
 	@Override
-    protected void writeJson(final JsonGenerator g) throws IOException
+    protected void writeJson(final HttpServletRequest request, final JsonGenerator g) throws IOException
 	{
         g.writeStartArray();
         for (final ReferencedEntry<PV> ref : PVPool.getPVReferences())

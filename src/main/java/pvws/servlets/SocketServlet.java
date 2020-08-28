@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Oak Ridge National Laboratory.
+ * Copyright (c) 2019-2020 Oak Ridge National Laboratory.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -17,6 +17,9 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.epics.vtype.Array;
+import org.epics.vtype.VType;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import pvws.PVWebSocketContext;
@@ -31,29 +34,45 @@ public class SocketServlet extends JSONServlet
 {
 	private static final long serialVersionUID = 1L;
 
-	/** GET /socket : Return info about all sockets and their PVs */
+	/** GET /socket : Return info about all sockets and their PVs
+	 *
+	 *  <p>Use /socket/{id} to only get into about selected socket ID.
+	 */
 	@Override
-    protected void writeJson(final JsonGenerator g) throws IOException
+    protected void writeJson(final HttpServletRequest request, final JsonGenerator g) throws IOException
 	{
+	    final String selected_id = request.getPathInfo() == null
+	                             ? null
+	                             : request.getPathInfo().substring(1);
         g.writeStartObject();
         g.writeArrayFieldStart("sockets");
         for (final WebSocket socket : PVWebSocketContext.getSockets())
         {
+            if (selected_id != null  &&  !socket.getId().equals(selected_id))
+                continue;
             g.writeStartObject();
             g.writeStringField("id", socket.getId());
+            g.writeNumberField("created", socket.getCreateTime());
+            g.writeNumberField("last_client_message", socket.getLastClientMessage());
+            g.writeNumberField("last_message_sent", socket.getLastMessageSent());
+            g.writeNumberField("queued", socket.getQueuedMessageCount());
 
             g.writeArrayFieldStart("pvs");
             for (final WebSocketPV pv : socket.getPVs())
             {
                 g.writeStartObject();
                 g.writeStringField("name", pv.getName());
-                g.writeStringField("value", Objects.toString(pv.getLastValue()));
+                // Add representation of value.
+                final VType value = pv.getLastValue();
+                if (value instanceof Array)
+                {   // For arrays, show size, not actual elements
+                    g.writeStringField("value", value.getClass().getName() + ", size " + ((Array) value).getSizes());
+                }
+                else
+                    g.writeStringField("value", Objects.toString(pv.getLastValue()));
                 g.writeEndObject();
             }
             g.writeEndArray();
-
-            g.writeNumberField("queued", socket.getQueuedMessageCount());
-            g.writeNumberField("last_client_message", socket.getLastClientMessage());
 
             g.writeEndObject();
         }

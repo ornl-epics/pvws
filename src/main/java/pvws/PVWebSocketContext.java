@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Oak Ridge National Laboratory.
+ * Copyright (c) 2019-2020 Oak Ridge National Laboratory.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -75,6 +75,9 @@ public class PVWebSocketContext implements ServletContextListener
     {
         final ServletContext context = ev.getServletContext();
 
+        logger.log(Level.INFO, "===========================================");
+        logger.log(Level.INFO, context.getContextPath() + " shut down");
+
         // Dispose all web sockets that did not self-close
         if (! sockets.isEmpty())
         {
@@ -86,12 +89,10 @@ public class PVWebSocketContext implements ServletContextListener
         if (! PVPool.getPVReferences().isEmpty())
             for (final ReferencedEntry<PV> ref : PVPool.getPVReferences())
             {
-                logger.log(Level.WARNING, "Unrelease PV " + ref.getEntry().getName());
+                logger.log(Level.WARNING, "Unreleased PV " + ref.getEntry().getName());
                 PVPool.releasePV(ref.getEntry());
             }
 
-        logger.log(Level.INFO, "===========================================");
-        logger.log(Level.INFO, context.getContextPath() + " shut down");
         logger.log(Level.INFO, "===========================================");
     }
 }
