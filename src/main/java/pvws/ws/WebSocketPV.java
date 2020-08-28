@@ -39,8 +39,8 @@ public class WebSocketPV
     private final String name;
     private final WebSocket socket;
     private volatile PV pv;
-    private AtomicReference<Disposable> subscription = new AtomicReference<>(), array_subscription = new AtomicReference<>();
-    private volatile Disposable subscription_access;
+    private AtomicReference<Disposable> subscription = new AtomicReference<>(), array_subscription = new AtomicReference<>(), subscription_access= new AtomicReference<>();
+
     private volatile boolean subscribed_for_array = false;
     private volatile VType last_value = null;
     private volatile boolean last_readonly = true;
@@ -94,9 +94,9 @@ public class WebSocketPV
         subscription.set(pv.onValueEvent()
                            .throttleLatest(THROTTLE_MS, TimeUnit.MILLISECONDS)
                            .subscribe(this::handleUpdates));
-        subscription_access = pv.onAccessRightsEvent()
+        subscription_access.set(pv.onAccessRightsEvent()
                          .throttleLatest(THROTTLE_MS, TimeUnit.MILLISECONDS)
-                         .subscribe(this::handleUpdates_access);
+                         .subscribe(this::handleUpdates_access));
     }
 
     private void handleUpdates(final VType value)
