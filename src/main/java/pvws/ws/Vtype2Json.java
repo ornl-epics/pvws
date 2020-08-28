@@ -60,11 +60,12 @@ public class Vtype2Json
             handleDoubles(g, (VDoubleArray) value, last_value);
         else if (value instanceof VIntArray)
             handleInts(g, (VIntArray) value, last_value);
-        else
+        else if (value != null)
         {
             // TODO Many more types
             g.writeStringField("text", value.toString());
         }
+        // null: Neither 'value' nor 'text'
 
         // Change in read/write access?
         if (last_readonly != readonly)
