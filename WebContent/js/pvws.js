@@ -80,16 +80,14 @@ class PVWS
             
             //Only way found to show PV as disconnected
             if(jm.value =="NaN")
-            {
-              this.close();
-            }
+                this.close();
             else
             {
-              // Update cached value with received changes
-              Object.assign(value, jm);
-              this.values[jm.pv] = value;
-              // console.log("Update for PV " + jm.pv + ": " + JSON.stringify(value));
-              this.message_handler(value);
+                // Update cached value with received changes
+                Object.assign(value, jm);
+                this.values[jm.pv] = value;
+                // console.log("Update for PV " + jm.pv + ": " + JSON.stringify(value));
+                this.message_handler(value);
             }
         }
         else
