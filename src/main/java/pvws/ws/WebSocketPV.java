@@ -96,9 +96,12 @@ public class WebSocketPV
                            .subscribe(this::handleUpdates));
         subscription_access.set(pv.onAccessRightsEvent()
                                    .throttleLatest(THROTTLE_MS, TimeUnit.MILLISECONDS)
-                                   .subscribe(this::handleUpdates_access));
+                                   .subscribe(this::handleAccessChanges));
     }
 
+    /** Handle change in value
+     *  @param value Latest value
+     */
     private void handleUpdates(final VType value)
     {
         if (value instanceof Array  && !subscribed_for_array)
@@ -135,13 +138,14 @@ public class WebSocketPV
         last_readonly = pv.isReadonly();
     }
 
-    private void handleUpdates_access(final Boolean readonly)
+    /** Handle change in access permissions
+     *  @param readonly Latest access mode
+     */
+    private void handleAccessChanges(final Boolean readonly)
     {
         socket.sendUpdate(name, last_value, last_value, last_readonly, pv.isReadonly() || !PV_WRITE_SUPPORT);
         last_readonly = pv.isReadonly();
     }
-
-
 
     /** @return Most recent value or null */
     public VType getLastValue()
