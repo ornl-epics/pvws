@@ -32,12 +32,16 @@ Set the following environment variables, for example in `$CATALINA_HOME/bin/sete
  * `PV_ARRAY_THROTTLE_MS`: .. for arrays (default: 10000).
  * `PV_WRITE_SUPPORT`: Set to `true` to enable writing (default: false).
  
+Place `pvws.war` in `$CATALINA_HOME/webapps`
+
 When enabling write access, actual write access is still controlled
 on a per-PV basis by Channel Access or PV Access security,
 but note that the user and host seen by the CA resp. PVA server
 is tomcat and not the web client end user.
- 
-Place `pvws.war` in `$CATALINA_HOME/webapps`
+If you decide to allow write access, you should consider placing
+the web socket and any applications that utilize it (Display Builder Web Runtime, ...)
+behind an authentication layer (Web Proxy, ...) which will limit access
+to appropriate users.
 
 
 Client URLs
@@ -53,12 +57,10 @@ Assuming Tomcat on `localhost:8080`, open
 Development Status
 ==================
 
-Uses slightly modified copy of Phoebus core-pv:
-
- * Builds with Java 8, not depending on Java 9+, yet
- * Allow use without Phoebus's preference handling
+Uses slightly modified copy of Phoebus core-pv
+without Phoebus's preference handling.
  
 TODO:
 
- * Move to Java 11, then use Phoebus core-pv "as is" with PVA, MQTT support
+ * Use Phoebus core-pv "as is" with PVA, MQTT support
 
