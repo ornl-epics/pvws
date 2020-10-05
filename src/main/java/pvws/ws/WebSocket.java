@@ -189,6 +189,18 @@ public class WebSocket
                 catch (final Exception ex)
                 {
                     logger.log(Level.WARNING, ex, () -> "Cannot write '" + shorten(message) + "' for " + id);
+
+                    // Clear queue
+                    String drop = write_queue.take();
+                    while (drop != null)
+                    {
+                        if (drop == EXIT_MESSAGE)
+                        {
+                            logger.log(Level.FINE, () -> "Exiting write thread " + id);
+                            return;
+                        }
+                        drop = write_queue.take();
+                    }
                 }
             }
         }
