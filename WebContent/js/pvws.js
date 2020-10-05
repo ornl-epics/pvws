@@ -143,7 +143,11 @@ class PVWS
             pvs = [ pvs ];
         // TODO Forget PVs so we don't re-subscribe after close/re-open
         this.socket.send(JSON.stringify({ type: "clear", pvs: pvs }));
-        // TODO Remove data from this.values ?
+        
+        // Remove entry for cleared PVs from this.values
+        let pv;
+        for (pv of pvs)
+            delete this.values[pv];
     }
     
     /** Request list of PVs */
