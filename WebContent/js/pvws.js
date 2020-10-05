@@ -134,7 +134,7 @@ class PVWS
         this.socket.send(JSON.stringify({ type: "subscribe", pvs: pvs }));
     }
 
-    /** Subscribe to one or more PVs
+    /** Un-Subscribe from one or more PVs
      *  @param pvs PV name or array of PV names
      */
     clear(pvs)
@@ -143,6 +143,7 @@ class PVWS
             pvs = [ pvs ];
         // TODO Forget PVs so we don't re-subscribe after close/re-open
         this.socket.send(JSON.stringify({ type: "clear", pvs: pvs }));
+        // TODO Remove data from this.values ?
     }
     
     /** Request list of PVs */
