@@ -24,7 +24,7 @@ Building
 Running under Tomcat
 --------------------
 
-Set the following environment variables, for example in `$CATALINA_HOME/bin/setenv.sh`:
+Set the following environment variables, for example in `$CATALINA_HOME/bin/setenv.sh` or `tomcat.conf`, depending on the version and installation details:
 
  * `EPICS_CA_ADDR_LIST`: CA address list.
  * `EPICS_CA_MAX_ARRAY_BYTES`: CA array size.
