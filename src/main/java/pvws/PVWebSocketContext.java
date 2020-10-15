@@ -48,6 +48,18 @@ public class PVWebSocketContext implements ServletContextListener
 
         logger.log(Level.INFO, "===========================================");
         logger.log(Level.INFO, context.getContextPath() + " started");
+        final StringBuilder buf = new StringBuilder();
+        buf.append("Environment:");
+        for (String name : new String[]
+                           {
+                               "EPICS_CA_ADDR_LIST",
+                               "EPICS_CA_MAX_ARRAY_BYTES",
+                               "PV_THROTTLE_MS",
+                               "PV_ARRAY_THROTTLE_MS",
+                               "PV_WRITE_SUPPORT"
+                            })
+            buf.append("\n").append(name).append(" = ").append(System.getenv(name));
+        logger.log(Level.INFO, buf.toString());
         logger.log(Level.INFO, "===========================================");
 
         start_time = Instant.now();
