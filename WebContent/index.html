@@ -155,6 +155,7 @@ returns JSON with a listing of all PVs in the PV connection pool.
 
 <hr>
 <div id="versions">
+2020-11-02 "Summary" with totals.<br>
 2020-10-28 Update to JCA 2.3.7 to 2.4.6.<br>
 2020-10-21 Fix disconnect on 'NaN'.<br>
 2020-10-15 Log environment vars on startup.<br>
@@ -262,6 +263,9 @@ function query_summary()
                                   .append($("<th>").text("Arrays"))
                                   .append($("<th>").text("Max. Array Size")) );
             // .. Rows
+            let pv_count = 0;
+            let array_count = 0;
+            let max_array = 0;
             for (let sock of data.sockets)
             {
                 let id = sock.id;
@@ -279,9 +283,25 @@ function query_summary()
                                       .append($("<td>").text(sock.pvs))
                                       .append($("<td>").text(sock.arrays))
                                       .append($("<td>").text(sock.max_size)) );
+                pv_count += sock.pvs;
+                array_count += sock.arrays;
+                if (sock.max_size > max_array)
+                	max_array = sock.max_size;
             }
-            makeTableSortable(table, false);
+            table.append($("<tr>").css("font-style", "italic")
+            		              .append($("<td>"))
+				                  .append($("<td>"))
+				                  .append($("<td>"))
+			                      .append($("<td>"))
+			                      .append($("<td>").text("Total: " + data.sockets.length + " sockets"))
+				                  .append($("<td>").text(pv_count))
+				                  .append($("<td>").text(array_count))
+				                  .append($("<td>").text(max_array)) );
+            
+            makeTableSortable(table, true);
             info.append(table);
+            
+            info.append();
             // Scroll to 'bottom' to show table
             window.scrollTo(0, 100000);
         },
