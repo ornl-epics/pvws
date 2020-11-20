@@ -19,8 +19,7 @@ import java.text.NumberFormat;
 import java.util.Base64;
 
 import org.epics.util.array.ListByte;
-import org.epics.util.array.ListDouble;
-import org.epics.util.array.ListInteger;
+import org.epics.util.array.ListNumber;
 import org.epics.util.stats.Range;
 import org.epics.vtype.AlarmSeverity;
 import org.epics.vtype.VByteArray;
@@ -28,8 +27,9 @@ import org.epics.vtype.VDouble;
 import org.epics.vtype.VDoubleArray;
 import org.epics.vtype.VEnum;
 import org.epics.vtype.VFloat;
-import org.epics.vtype.VIntArray;
+import org.epics.vtype.VFloatArray;
 import org.epics.vtype.VNumber;
+import org.epics.vtype.VNumberArray;
 import org.epics.vtype.VString;
 import org.epics.vtype.VType;
 
@@ -53,16 +53,24 @@ public class Vtype2Json
         else if (value instanceof VString)
             handleString(g, (VString) value, last_value);
         else if (value instanceof VEnum)
-            handleEnum(g, (VEnum) value, last_value);
+            handleEnum(g, (VEnum) value, last_value);        
         else if (value instanceof VByteArray)
             handleLongString(g, (VByteArray) value);
+        
+        // Serialize double and float arrays as b64dbl
         else if (value instanceof VDoubleArray)
-            handleDoubles(g, (VDoubleArray) value, last_value);
-        else if (value instanceof VIntArray)
-            handleInts(g, (VIntArray) value, last_value);
+            handleDoubles(g, (VNumberArray) value, last_value);
+        else if (value instanceof VFloatArray)
+            handleDoubles(g, (VNumberArray) value, last_value);
+        
+        // Serialize remaining number arrays (int, short) as b64int
+        else if (value instanceof VNumberArray)
+            handleInts(g, (VNumberArray) value, last_value);
+        
         else if (value != null)
         {
-            // TODO Many more types
+            // TODO Are there more types that need to be handled?
+        	// For now pass as text
             g.writeStringField("text", value.toString());
         }
         // null: Neither 'value' nor 'text'
@@ -149,7 +157,7 @@ public class Vtype2Json
     }
 
 
-    private static void handleDoubles(final JsonGenerator g, final VDoubleArray value, final VType last_value) throws Exception
+    private static void handleDoubles(final JsonGenerator g, final VNumberArray value, final VType last_value) throws Exception
     {
         final AlarmSeverity severity = value.getAlarm().getSeverity();
         if (last_value == null)
@@ -173,7 +181,7 @@ public class Vtype2Json
 
         // Convert into Base64 double array
         // System.out.println("Encode: " + value.getData());
-        final ListDouble data = value.getData();
+        final ListNumber data = value.getData();
         final int N = data.size();
         final ByteBuffer buf = ByteBuffer.allocate(N * Double.BYTES);
         buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -184,7 +192,7 @@ public class Vtype2Json
     }
 
 
-    private static void handleInts(final JsonGenerator g, final VIntArray value, final VType last_value) throws Exception
+    private static void handleInts(final JsonGenerator g, final VNumberArray value, final VType last_value) throws Exception
     {
         final AlarmSeverity severity = value.getAlarm().getSeverity();
         if (last_value == null)
@@ -208,7 +216,7 @@ public class Vtype2Json
 
         // Convert into Base64 int64 array
         // System.out.println("Encode: " + value.getData());
-        final ListInteger data = value.getData();
+        final ListNumber data = value.getData();
         final int N = data.size();
         final ByteBuffer buf = ByteBuffer.allocate(N * Integer.BYTES);
         buf.order(ByteOrder.LITTLE_ENDIAN);
