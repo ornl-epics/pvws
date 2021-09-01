@@ -3,6 +3,10 @@ PV Web Socket
 
 Web Socket for PVs.
 
+Developed for 
+[Display Builder Web Runtime](https://github.com/kasemir/dbwr),
+but can be used by any web page to read PV data.
+
 Combines ideas from https://github.com/JeffersonLab/epics2web
 with https://github.com/xihui/WebPDA:
 
@@ -54,6 +58,14 @@ of URLs used to connect to PVs.
 Assuming Tomcat on `localhost:8080`, open
 
     http://localhost:8080/pvws
+
+
+Usage
+-----
+
+The built-in `index.html` demonstrates all features.
+See `custom.html` for a basic HTML page that subscribes to
+a few fixed PVs and displays the result. 
     
 
 Development Status
