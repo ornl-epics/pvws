@@ -10,6 +10,7 @@ with https://github.com/xihui/WebPDA:
  * JSON for the data, but packing arrays as binary
  * Metadata is sent once, then only updates. JavaScript client merges updates.
 
+Key user is [Display Builder Web Runtime](https://github.com/ornl-epics/dbwr).
 
 Building
 --------
