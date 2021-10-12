@@ -3,10 +3,6 @@ PV Web Socket
 
 Web Socket for PVs.
 
-Developed for 
-[Display Builder Web Runtime](https://github.com/kasemir/dbwr),
-but can be used by any web page to read PV data.
-
 Combines ideas from https://github.com/JeffersonLab/epics2web
 with https://github.com/xihui/WebPDA:
 
@@ -18,12 +14,13 @@ with https://github.com/xihui/WebPDA:
 Building
 --------
 
-    export ANT_HOME=/path/to/apache-ant
-    export CATALINA_HOME=/path/to/apache-tomcat
-    export JAVA_HOME=/path/to/jdk8
-    export PATH=$ANT_HOME/bin:$JAVA_HOME/bin:$PATH
-    
-    ant clean war
+To build with maven:
+
+    mvn clean package
+
+Project can also be imported into Eclipse JEE IDE
+via File, Import, Maven, Existing Maven Projects.
+
 
 Running under Tomcat
 --------------------
@@ -58,23 +55,16 @@ of URLs used to connect to PVs.
 Assuming Tomcat on `localhost:8080`, open
 
     http://localhost:8080/pvws
-
-
-Usage
------
-
-The built-in `index.html` demonstrates all features.
-See `custom.html` for a basic HTML page that subscribes to
-a few fixed PVs and displays the result. 
     
 
 Development Status
 ==================
 
-Uses slightly modified copy of Phoebus core-pv
-without Phoebus's preference handling.
- 
-TODO:
+Maven layout is based on
 
- * Use Phoebus core-pv "as is" with PVA, MQTT support
+    mvn archetype:generate -DgroupId=gov.ornl -DartifactId=pvws -DarchetypeArtifactId=maven-archetype-webapp -DinteractiveMode=false
+
+TODO, Ideas:
+
+ * Use Phoebus core-pv "as is" with PVA and MQTT support
 
