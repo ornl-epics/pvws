@@ -28,11 +28,22 @@ Running under Tomcat
 
 Set the following environment variables, for example in `$CATALINA_HOME/bin/setenv.sh` or `tomcat.conf`, depending on the version and installation details:
 
+Channel Access Settings:
  * `EPICS_CA_ADDR_LIST`: CA address list.
  * `EPICS_CA_MAX_ARRAY_BYTES`: CA array size.
+
+PV Access Settings:
+ * `EPICS_PVA_ADDR_LIST`: Space-separated list of host names or IP addresses. Each may be followed by ":port", otherwise defaulting to EPICS_PVA_BROADCAST_PORT. When empty, local subnet is used.
+ * `EPICS_PVA_AUTO_ADDR_LIST`: 'YES' (default) or 'NO'.
+ * `EPICS_PVA_BROADCAST_PORT`: Port used for name searches, defaults to 5076.
+ * `EPICS_PVA_NAME_SERVERS`: Space-separated list of TCP name servers, provided as IP address followed by optional ":port". Client will connect to each address and send name searches before using the EPICS_PVA_ADDR_LIST for UDP searches. Set EPICS_PVA_ADDR_LIST to empty and EPICS_PVA_AUTO_ADDR_LIST=NO to use only the TCP name servers and avoid all UDP traffic.
+
+Web Socket Settings:
  * `PV_THROTTLE_MS`: Throttle-latest period in milliseconds (default: 1000).
  * `PV_ARRAY_THROTTLE_MS`: .. for arrays (default: 10000).
  * `PV_WRITE_SUPPORT`: Set to `true` to enable writing (default: false).
+
+
  
 Place `pvws.war` in `$CATALINA_HOME/webapps`.
 You can check the tomcat log for the effective values
