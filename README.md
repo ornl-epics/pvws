@@ -65,7 +65,3 @@ Maven layout is based on
 
     mvn archetype:generate -DgroupId=gov.ornl -DartifactId=pvws -DarchetypeArtifactId=maven-archetype-webapp -DinteractiveMode=false
 
-TODO, Ideas:
-
- * Use Phoebus core-pv "as is" with PVA and MQTT support
-
