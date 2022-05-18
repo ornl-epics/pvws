@@ -12,6 +12,15 @@ with https://github.com/xihui/WebPDA:
 
 Key user is [Display Builder Web Runtime](https://github.com/ornl-epics/dbwr).
 
+
+Change Log
+----------
+
+Version information is displayed at the bottom of the built-in web page,
+see `<div id="versions">` in
+https://github.com/ornl-epics/pvws/blob/main/src/main/webapp/index.html
+
+
 Building
 --------
 
