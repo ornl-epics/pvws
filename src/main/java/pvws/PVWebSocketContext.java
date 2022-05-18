@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 UT-Battelle, LLC.
+ * Copyright (c) 2019-2022 UT-Battelle, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -30,15 +30,19 @@ import pvws.ws.WebSocket;
 /** Web application context, tracks all {@link WebSocket}s
  *  @author Kay Kasemir
  */
+@SuppressWarnings("nls")
 @WebListener
 public class PVWebSocketContext implements ServletContextListener
 {
+    /** Shared logger */
     public static final Logger logger = Logger.getLogger(WebSocket.class.getPackage().getName());
 
+    /** Shared JSON factory */
     public static final JsonFactory json_factory = new JsonFactory();
 
     private static final Set<WebSocket> sockets = Collections.newSetFromMap(new ConcurrentHashMap<WebSocket, Boolean>());
 
+    /** Context start time */
     public static Instant start_time;
 
     @Override
@@ -77,6 +81,7 @@ public class PVWebSocketContext implements ServletContextListener
         sockets.remove(socket);
     }
 
+    /** @return Currently known sockets */
     public static Collection<WebSocket> getSockets()
     {
         return sockets;

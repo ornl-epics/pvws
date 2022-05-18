@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 UT-Battelle, LLC.
+ * Copyright (c) 2019-2022 UT-Battelle, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -46,6 +46,7 @@ import pvws.PVWebSocketContext;
 /** Web socket, handles {@link WebSocketPV}s for one web client
  *  @author Kay Kasemir
  */
+@SuppressWarnings("nls")
 @ServerEndpoint(value="/pv")
 public class WebSocket
 {
@@ -79,6 +80,7 @@ public class WebSocket
     /** Map of PV name to PV */
     private final ConcurrentHashMap<String, WebSocketPV> pvs = new ConcurrentHashMap<>();
 
+    /** Constructor */
     public WebSocket()
     {
         // Constructor, register with PVWebSocketContext
@@ -128,6 +130,9 @@ public class WebSocket
         return write_queue.size();
     }
 
+    /** @param message Potentially long message
+     *  @return Message shorted to 200 chars
+     */
     private String shorten(final String message)
     {
         if (message == null  ||  message.length() < 200)
@@ -215,12 +220,15 @@ public class WebSocket
         last_client_message = System.currentTimeMillis();
     }
 
-    // TODO SessionManager:
-    // Periodically 'ping'
-    // Track time of last interaction
+    /** Called when client opens a web socket
+     *  @param session {@link Session}
+     *  @param config {@link EndpointConfig}
+     */
     @OnOpen
     public void onOpen(final Session session, final EndpointConfig config)
     {
+        // TODO SessionManager:
+        // Periodically 'ping'?
         logger.log(Level.FINE, () -> "Opening web socket " + session.getRequestURI() + " ID " + session.getId());
         this.session = session;
         id = session.getId();
@@ -228,6 +236,10 @@ public class WebSocket
         trackClientUpdate();
     }
 
+    /** Called when client closes a web socket
+     *  @param session {@link Session}
+     *  @param reason  {@link CloseReason}
+     */
     @OnClose
     public void onClose(final Session session, final CloseReason reason)
     {
@@ -236,6 +248,10 @@ public class WebSocket
         last_client_message = 0;
     }
 
+    /** Called when client sends a "pong"
+     *  @param message {@link PongMessage}
+     *  @param session {@link Session}
+     */
     @OnMessage
     public void onPong(final PongMessage message, final Session session)
     {
@@ -255,6 +271,10 @@ public class WebSocket
         return pvs;
     }
 
+    /** Called when client sends a general message
+     *  @param message Text of the message, expected to be JSON
+     *  @param session {@link Session}
+     */
     @OnMessage
     public void onMessage(final String message, final Session session)
     {
@@ -366,6 +386,9 @@ public class WebSocket
         }
     }
 
+    /** Error handler
+     *  @param ex Exception that describes the error
+     */
     @OnError
     public void onError(final Throwable ex)
     {

@@ -36,11 +36,22 @@ import org.epics.vtype.VType;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+/** Map {@link VType} to JSON
+ *  @author Kay Kasemir
+ */
+@SuppressWarnings("nls")
 public class Vtype2Json
 {
     private static final Charset UTF8 = Charset.forName("UTF-8");
 
-
+    /** @param name PV Name
+     *  @param value Most recent value
+     *  @param last_value Previous value or <code>null</code>, used to detect changes
+     *  @param last_readonly Was PV read-only?
+     *  @param readonly Is PV read-only right now?
+     *  @return JSON text
+     *  @throws Exception on error
+     */
     public static String toJson(final String name, final VType value, final VType last_value, final boolean last_readonly, final boolean readonly) throws Exception
     {
         final ByteArrayOutputStream buf = new ByteArrayOutputStream();
