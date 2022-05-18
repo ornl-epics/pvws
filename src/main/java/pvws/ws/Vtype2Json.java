@@ -23,6 +23,7 @@ import org.epics.util.array.ListNumber;
 import org.epics.util.stats.Range;
 import org.epics.vtype.AlarmSeverity;
 import org.epics.vtype.Display;
+import org.epics.vtype.Time;
 import org.epics.vtype.VByteArray;
 import org.epics.vtype.VDouble;
 import org.epics.vtype.VDoubleArray;
@@ -90,6 +91,13 @@ public class Vtype2Json
         // Change in read/write access?
         if (last_readonly != readonly)
             g.writeBooleanField("readonly", readonly);
+
+        final Time time = Time.timeOf(value);
+        if (time != null)
+        {
+            g.writeNumberField("seconds", time.getTimestamp().getEpochSecond());
+            g.writeNumberField("nanos", time.getTimestamp().getNano());
+        }
 
         g.writeEndObject();
         g.flush();

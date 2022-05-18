@@ -84,6 +84,8 @@ Value updates are JSON messages with the following elements:
   <dt>warn_low</dt>   <dd>Low end of warning range ('LOW')</dd>
   <dt>warn_high</dt>  <dd>High end of warning range ('HIGH')</dd>
   <dt>alarm_high</dt> <dd>High end of alarm range ('HIHI')</dd>
+  <dt>seconds</dt>    <dd>Timestamp seconds since January 1, 1970 epoch</dd>
+  <dt>nanos</dt>      <dd>Timestamp nanoseconds</dd>
   <dt>readonly</dt>   <dd>'true' for read-only PV, no write access</dd>
 </dl>
 
@@ -162,7 +164,7 @@ returns JSON with a listing of all PVs in the PV connection pool.
 
 <hr>
 <div id="versions">
-2022-05-18 Set 'jca.use_env=true' for core-pv CA to use EPICS_CA_ADDR_LIST.<br>
+2022-05-18 Set 'jca.use_env=true' for core-pv CA to use EPICS_CA_ADDR_LIST. Add time stamp.<br>
 2022-05-18 "R2" Add alarm/warn thresholds.<br>
 2022-05-12 "R1" Unbundle core-pv.<br>
 2022-04-07 "R0" jQuery 3.6.0.<br>
