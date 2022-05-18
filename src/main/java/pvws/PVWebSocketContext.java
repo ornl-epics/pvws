@@ -53,7 +53,9 @@ public class PVWebSocketContext implements ServletContextListener
         logger.log(Level.INFO, "===========================================");
         logger.log(Level.INFO, context.getContextPath() + " started");
         final StringBuilder buf = new StringBuilder();
-        buf.append("Environment:");
+        // Configure JCA/CAJ to use environment vars, not java properties or preferences
+        System.setProperty("jca.use_env", "true");
+        buf.append("Environment used by JCA:");
         for (String name : new String[]
                            {
                                "EPICS_CA_ADDR_LIST",
