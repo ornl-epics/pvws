@@ -72,12 +72,19 @@ Value updates are JSON messages with the following elements:
 <dl>
   <dt>type</dt>       <dd>'update'</dd>
   <dt>pv</dt>         <dd>PV Name</dd>
-  <dt>severity</dt>   <dd>NONE, MINOR, MAJOR, INVALID, UNDEFINED</dd>
   <dt>value</dt>      <dd>Value of numeric PV or 'NaN'; Enum PV's numeric value</dd>
   <dt>text</dt>       <dd>Value of text PV; Selected label of enum PV</dd>
+  <dt>severity</dt>   <dd>NONE, MINOR, MAJOR, INVALID, UNDEFINED</dd>
   <dt>units</dt>      <dd>Numeric PV units</dd>
   <dt>precision</dt>  <dd>Numeric PV precision</dd>
   <dt>labels</dt>     <dd>Array of labels for enum PV</dd>
+  <dt>min</dt>        <dd>Low end of expected value range</dd>
+  <dt>max</dt>        <dd>High end of expected value range</dd>
+  <dt>alarm_low</dt>  <dd>Low end of alarm range (for EPICS records, often 'LOLO')</dd>
+  <dt>warn_low</dt>   <dd>Low end of warning range ('LOW')</dd>
+  <dt>warn_high</dt>  <dd>High end of warning range ('HIGH')</dd>
+  <dt>alarm_high</dt> <dd>High end of alarm range ('HIHI')</dd>
+  <dt>readonly</dt>   <dd>'true' for read-only PV, no write access</dd>
 </dl>
 
 <p>
@@ -155,6 +162,7 @@ returns JSON with a listing of all PVs in the PV connection pool.
 
 <hr>
 <div id="versions">
+2022-05-18 "R2" Add alarm/warn thresholds.<br>
 2022-05-12 "R1" Unbundle core-pv.<br>
 2022-04-07 "R0" jQuery 3.6.0.<br>
 2020-11-20 Support 'float' and 'short' arrays.<br>

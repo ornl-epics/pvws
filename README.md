@@ -67,10 +67,45 @@ of URLs used to connect to PVs.
 Assuming Tomcat on `localhost:8080`, open
 
     http://localhost:8080/pvws
-    
 
-Development Status
-==================
+Web Socket Details
+------------------
+
+The basic behavior of the web socket and the fundamental format of the exchanged messages is
+not expected to change. Any changes ought to remain compatible by for example adding
+message elements which older clients would simply ignore.
+There is, however, no guarantee of future compatibility. The exact behavior and message format
+is thus only documented on the built-in web page that demonstrates each feature.
+
+To learn about the web socket behavior and the message format, point a web browser to
+
+    http://localhost:8080/pvws
+
+Enable the introspection or debug interface of the web browser. For Firefox, at the time of this
+writing, invoke "Inspect" from the context menu, then reload the page to assert that you capture
+all network traffic.
+You should find a web socket connection to `http://localhost:8080/pvws/pv`.
+Open its Request/Response detail pane in the inspector and try the following key commands.
+
+**Echo**
+
+Note how pressing the "Echo" button on the web page sends an echo type of message to the web socket,
+which then returns the same text.
+
+**Subscribe**
+
+Use the web page to subscribe to for example `sim://sine`.
+Note the subscription request sent to the web socket,
+and how the web socket then sends 'update' replies.
+The web socket sends the complete meta data (units etc.)
+just once, followed by only the changed "value" and maybe "severity".
+Check the `pvws.js` library as an example for combining the received updates
+into a complete value, so end users of the data can always conveniently see
+the complete value while the underlying network traffic is optimized to
+only transfer changes.
+
+File Layout
+===========
 
 Maven layout is based on
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 UT-Battelle, LLC.
+ * Copyright (c) 2019-2022 UT-Battelle, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -22,6 +22,7 @@ import org.epics.util.array.ListByte;
 import org.epics.util.array.ListNumber;
 import org.epics.util.stats.Range;
 import org.epics.vtype.AlarmSeverity;
+import org.epics.vtype.Display;
 import org.epics.vtype.VByteArray;
 import org.epics.vtype.VDouble;
 import org.epics.vtype.VDoubleArray;
@@ -53,20 +54,20 @@ public class Vtype2Json
         else if (value instanceof VString)
             handleString(g, (VString) value, last_value);
         else if (value instanceof VEnum)
-            handleEnum(g, (VEnum) value, last_value);        
+            handleEnum(g, (VEnum) value, last_value);
         else if (value instanceof VByteArray)
             handleLongString(g, (VByteArray) value);
-        
+
         // Serialize double and float arrays as b64dbl
         else if (value instanceof VDoubleArray)
             handleDoubles(g, (VNumberArray) value, last_value);
         else if (value instanceof VFloatArray)
             handleDoubles(g, (VNumberArray) value, last_value);
-        
+
         // Serialize remaining number arrays (int, short) as b64int
         else if (value instanceof VNumberArray)
             handleInts(g, (VNumberArray) value, last_value);
-        
+
         else if (value != null)
         {
             // TODO Are there more types that need to be handled?
@@ -117,6 +118,37 @@ public class Vtype2Json
         g.writeStringField("text", new String(bytes, 0, len, UTF8));
     }
 
+    private static void handleDisplay(final JsonGenerator g, final Display display) throws Exception
+    {
+        if (display == null)
+            return;
+
+        g.writeStringField("units", display.getUnit());
+
+        final NumberFormat format =  display.getFormat();
+        if (format instanceof DecimalFormat)
+            g.writeNumberField("precision", ((DecimalFormat) format).getMaximumFractionDigits());
+
+        Range range = display.getDisplayRange();
+        if (range != null)
+        {
+            g.writeNumberField("min", range.getMinimum());
+            g.writeNumberField("max", range.getMaximum());
+        }
+
+        range = display.getWarningRange();
+        if (range != null)
+        {
+            g.writeNumberField("warn_low", range.getMinimum());
+            g.writeNumberField("warn_high", range.getMaximum());
+        }
+        range = display.getAlarmRange();
+        if (range != null)
+        {
+            g.writeNumberField("alarm_low", range.getMinimum());
+            g.writeNumberField("alarm_high", range.getMaximum());
+        }
+    }
 
     private static void handleNumber(final JsonGenerator g, final VNumber value, final VType last_value) throws Exception
     {
@@ -124,17 +156,9 @@ public class Vtype2Json
         if (last_value == null)
         {
             // Initially, add complete metadata
-            g.writeStringField("units", value.getDisplay().getUnit());
-
-            final NumberFormat format =  value.getDisplay().getFormat();
-            if (format instanceof DecimalFormat)
-                g.writeNumberField("precision", ((DecimalFormat) format).getMaximumFractionDigits());
-
+            handleDisplay(g, value.getDisplay());
+            // Initial severity
             g.writeStringField("severity", severity.name());
-
-            final Range range = value.getDisplay().getDisplayRange();
-            g.writeNumberField("min", range.getMinimum());
-            g.writeNumberField("max", range.getMaximum());
         }
         else
         {
@@ -163,12 +187,8 @@ public class Vtype2Json
         if (last_value == null)
         {
             // Initially, add complete metadata
-            g.writeStringField("units", value.getDisplay().getUnit());
-
-            final NumberFormat format =  value.getDisplay().getFormat();
-            if (format instanceof DecimalFormat)
-                g.writeNumberField("precision", ((DecimalFormat) format).getMaximumFractionDigits());
-
+            handleDisplay(g, value.getDisplay());
+            // Initial severity
             g.writeStringField("severity", severity.name());
         }
         else
@@ -198,12 +218,8 @@ public class Vtype2Json
         if (last_value == null)
         {
             // Initially, add complete metadata
-            g.writeStringField("units", value.getDisplay().getUnit());
-
-            final NumberFormat format =  value.getDisplay().getFormat();
-            if (format instanceof DecimalFormat)
-                g.writeNumberField("precision", ((DecimalFormat) format).getMaximumFractionDigits());
-
+            handleDisplay(g, value.getDisplay());
+            // Initial severity
             g.writeStringField("severity", severity.name());
         }
         else
@@ -238,6 +254,7 @@ public class Vtype2Json
                 g.writeString(label);
             g.writeEndArray();
 
+            // Initial severity
             g.writeStringField("severity", value.getAlarm().getSeverity().name());
         }
         else
