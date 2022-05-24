@@ -31,6 +31,8 @@ To build with maven:
 Project can also be imported into Eclipse JEE IDE
 via File, Import, Maven, Existing Maven Projects.
 
+This builds against a released version of core-pv and jca. To use the "latest" build from locally compiled versions of for example https://github.com/epics-base/jca.git and https://github.com/ControlSystemStudio/phoebus/tree/master/core/pva, mvn install these, then update the pom.xml to list their 1.2.3-SNAPSHOT versions, which should use the binaries that you just installed locally.
+
 
 Running under Tomcat
 --------------------
