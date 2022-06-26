@@ -6,9 +6,13 @@ Web Socket for PVs.
 Combines ideas from https://github.com/JeffersonLab/epics2web
 with https://github.com/xihui/WebPDA:
 
- * Web Socket for Channel Access, PV Access, simulated PVs, local PVs, ... based on Phoebus core-pv and RxJava
- * JSON for the data, but packing arrays as binary
- * Metadata is sent once, then only updates. JavaScript client merges updates.
+ * Web Socket for EPICS Channel Access and PV Access, simulated PVs, local PVs, formulas ... based on Phoebus core-pv and RxJava
+ * Scalar and array values
+ * Basic values plus time stamps, status/severity, metadata for units, display ranges etc
+ * Generally using JSON to simplify use in JavaScript web client, but packing array values as binary to reduce size
+ * Example JavaScript client library, but usable by any web client
+ * Metadata is sent once with first value, then only when it changes to reduce network traffic.
+   Example JavaScript client merges updates to always present the complete value with all metadata
 
 Key user is [Display Builder Web Runtime](https://github.com/ornl-epics/dbwr).
 
@@ -95,8 +99,11 @@ To learn about the web socket behavior and the message format, point a web brows
 Enable the introspection or debug interface of the web browser. For Firefox, at the time of this
 writing, invoke "Inspect" from the context menu, then reload the page to assert that you capture
 all network traffic.
-You should find a web socket connection to `http://localhost:8080/pvws/pv`.
+You should find a web socket connection to `ws://localhost:8080/pvws/pv`.
 Open its Request/Response detail pane in the inspector and try the following key commands.
+
+When you configure tomcat to allow excrypted connections, open web browser to `https://localhost:8080/pvws`
+and note that the web socket connection likewise changes to `wss://localhost:8080/pvws/pv`.
 
 **Echo**
 
