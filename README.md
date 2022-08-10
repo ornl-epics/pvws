@@ -32,10 +32,15 @@ To build with maven:
 
     mvn clean package
 
+This results in a file `target/pvws.war`.
+
+When using VS Code, maven can be invoked from the View menu: "Command Palette", "Maven: execute commands .."
+and then selecting "clean" or "package".
+
 Project can also be imported into Eclipse JEE IDE
 via File, Import, Maven, Existing Maven Projects.
 
-This builds against a released version of core-pv and jca. To use the "latest" build from locally compiled versions of for example https://github.com/epics-base/jca.git and https://github.com/ControlSystemStudio/phoebus/tree/master/core/pva, mvn install these, then update the pom.xml to list their 1.2.3-SNAPSHOT versions, which should use the binaries that you just installed locally.
+This builds against a released version of core-pv and jca. To use the "latest" build from locally compiled versions of for example https://github.com/epics-base/jca.git and https://github.com/ControlSystemStudio/phoebus/tree/master/core/pva, `mvn clean install` these, then update the pom.xml to list their 1.2.3-SNAPSHOT versions, which should use the binaries that you just installed locally.
 
 
 Running under Tomcat
@@ -61,13 +66,15 @@ Web Socket Settings:
 
  
 Place `pvws.war` in `$CATALINA_HOME/webapps`.
-You can check the tomcat log for the effective values
+You can check the tomcat log for the effective values of various configuration settings
 since they will be logged when the context starts up.
 
 When enabling write access, actual write access is still controlled
 on a per-PV basis by Channel Access or PV Access security,
 but note that the user and host seen by the CA resp. PVA server
 is tomcat and not the web client end user.
+This makes it impossible to control write access based on the actual end user
+via CA or PVA security.
 If you decide to allow write access, you should consider placing
 the web socket and any applications that utilize it (Display Builder Web Runtime, ...)
 behind an authentication layer (Web Proxy, ...) which will limit access
