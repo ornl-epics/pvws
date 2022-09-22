@@ -24,6 +24,11 @@ Version information is displayed at the bottom of the built-in web page,
 see `<div id="versions">` in
 https://github.com/ornl-epics/pvws/blob/main/src/main/webapp/index.html
 
+Binary
+------
+
+.. is available as https://controlssoftware.sns.ornl.gov/css_phoebus/nightly/pvws.war
+
 
 Building
 --------
