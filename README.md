@@ -14,7 +14,8 @@ with https://github.com/xihui/WebPDA:
  * Metadata is sent once with first value, then only when it changes to reduce network traffic.
    Example JavaScript client merges updates to always present the complete value with all metadata
 
-Key user is [Display Builder Web Runtime](https://github.com/ornl-epics/dbwr).
+Key user is the [Display Builder Web Runtime](https://github.com/ornl-epics/dbwr).
+Other examples include the [PV Info Tool](https://github.com/channelFinder/pvinfo).
 
 
 Change Log
