@@ -49,10 +49,27 @@ via File, Import, Maven, Existing Maven Projects.
 This builds against a released version of core-pv and jca. To use the "latest" build from locally compiled versions of for example https://github.com/epics-base/jca.git and https://github.com/ControlSystemStudio/phoebus/tree/master/core/pva, `mvn clean install` these, then update the pom.xml to list their 1.2.3-SNAPSHOT versions, which should use the binaries that you just installed locally.
 
 
+PV Types
+--------
+
+The PV web socket supports the PV names handled by core-pv, which include:
+
+ * `ca://NameOfPV` for Channel Access
+ * `pva://NameOfPV` for PV Access
+ * `sim://NameOfPV` for simulated channels that may be useful for testing
+ * `NameOfPV` uses the default PV type, see `PV_DEFAULT_TYPE` below
+ 
+
 Running under Tomcat
 --------------------
 
 Set the following environment variables, for example in `$CATALINA_HOME/bin/setenv.sh` or `tomcat.conf`, depending on the version and installation details:
+
+Web Socket Settings:
+ * `PV_DEFAULT_TYPE`: Set to `ca` or `pva` to set the default PV type (default: `ca`).
+ * `PV_THROTTLE_MS`: Throttle-latest period in milliseconds (default: 1000).
+ * `PV_ARRAY_THROTTLE_MS`: .. for arrays (default: 10000).
+ * `PV_WRITE_SUPPORT`: Set to `true` to enable writing (default: false).
 
 Channel Access Settings:
  * `EPICS_CA_ADDR_LIST`: CA address list.
@@ -63,13 +80,6 @@ PV Access Settings:
  * `EPICS_PVA_AUTO_ADDR_LIST`: 'YES' (default) or 'NO'.
  * `EPICS_PVA_BROADCAST_PORT`: Port used for name searches, defaults to 5076.
  * `EPICS_PVA_NAME_SERVERS`: Space-separated list of TCP name servers, provided as IP address followed by optional ":port". Client will connect to each address and send name searches before using the EPICS_PVA_ADDR_LIST for UDP searches. Set EPICS_PVA_ADDR_LIST to empty and EPICS_PVA_AUTO_ADDR_LIST=NO to use only the TCP name servers and avoid all UDP traffic.
-
-Web Socket Settings:
- * `PV_THROTTLE_MS`: Throttle-latest period in milliseconds (default: 1000).
- * `PV_ARRAY_THROTTLE_MS`: .. for arrays (default: 10000).
- * `PV_WRITE_SUPPORT`: Set to `true` to enable writing (default: false).
-
-
  
 Place `pvws.war` in `$CATALINA_HOME/webapps`.
 You can check the tomcat log for the effective values of various configuration settings

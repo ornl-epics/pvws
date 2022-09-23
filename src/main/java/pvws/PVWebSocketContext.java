@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -52,20 +53,29 @@ public class PVWebSocketContext implements ServletContextListener
 
         logger.log(Level.INFO, "===========================================");
         logger.log(Level.INFO, context.getContextPath() + " started");
-        final StringBuilder buf = new StringBuilder();
+   
+        // Set default type in preferences before PVPool reads the preferences
+        String default_type = System.getenv("PV_DEFAULT_TYPE");
+        if (default_type != null  &&  !default_type.isEmpty())
+            Preferences.userRoot().node("/org/phoebus/pv").put("default", default_type);
+            
+        logger.log(Level.INFO, "Supported PV types: " + PVPool.getSupportedPrefixes());
+
         // Configure JCA/CAJ to use environment vars, not java properties or preferences
         System.setProperty("jca.use_env", "true");
-        buf.append("Environment used by JCA:");
         for (String name : new String[]
                            {
-                               "EPICS_CA_ADDR_LIST",
-                               "EPICS_CA_MAX_ARRAY_BYTES",
+                               "PV_DEFAULT_TYPE",
                                "PV_THROTTLE_MS",
                                "PV_ARRAY_THROTTLE_MS",
-                               "PV_WRITE_SUPPORT"
+                               "PV_WRITE_SUPPORT",
+                               "EPICS_CA_ADDR_LIST",
+                               "EPICS_CA_AUTO_ADDR_LIST",
+                               "EPICS_CA_MAX_ARRAY_BYTES",
+                               "EPICS_PVA_ADDR_LIST",
+                               "EPICS_PVA_AUTO_ADDR_LIST"
                             })
-            buf.append("\n").append(name).append(" = ").append(System.getenv(name));
-        logger.log(Level.INFO, buf.toString());
+            logger.log(Level.INFO, name + " = " + System.getenv(name));
         logger.log(Level.INFO, "===========================================");
 
         start_time = Instant.now();
