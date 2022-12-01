@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 UT-Battelle, LLC.
+ * Copyright (c) 2019-2022 UT-Battelle, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -12,10 +12,10 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.logging.Level;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.epics.vtype.Array;
 import org.epics.vtype.VType;

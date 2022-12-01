@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 UT-Battelle, LLC.
+ * Copyright (c) 2019-2022 UT-Battelle, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -9,8 +9,8 @@ package pvws.servlets;
 import java.io.IOException;
 import java.util.Map;
 
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.phoebus.util.time.TimestampFormats;
 
