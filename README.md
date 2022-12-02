@@ -29,7 +29,7 @@ Binary
 ------
 
 .. is available as https://controlssoftware.sns.ornl.gov/css_phoebus/nightly/pvws.war
-
+but you may prefer to build it locally as described next.
 
 Building
 --------
