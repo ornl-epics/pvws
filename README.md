@@ -48,6 +48,13 @@ via File, Import, Maven, Existing Maven Projects.
 
 This builds against a released version of core-pv and jca. To use the "latest" build from locally compiled versions of for example https://github.com/epics-base/jca.git and https://github.com/ControlSystemStudio/phoebus/tree/master/core/pva, `mvn clean install` these, then update the pom.xml to list their 1.2.3-SNAPSHOT versions, which should use the binaries that you just installed locally.
 
+**Docker**
+
+Edit .env file with settings for git version and port number and docker/setenv.sh with your local site settings for EPICS/web socket settings. Then:
+
+```
+docker-compose build
+```
 
 PV Types
 --------
@@ -96,6 +103,18 @@ the web socket and any applications that utilize it (Display Builder Web Runtime
 behind an authentication layer (Web Proxy, ...) which will limit access
 to appropriate users.
 
+**Docker**
+
+To run docker container (use -d option to run in detached mode):
+
+```
+docker-compose up
+```
+
+The status can be seen with docker ps. The status will be healthy if pvws is fully connected
+```
+docker ps
+```
 
 Client URLs
 -----------
