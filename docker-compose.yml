@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+    pvws:
+        build:
+            context: docker
+            args:
+                GIT_TAG: ${GIT_TAG}
+                PORT_NUMBER: ${PORT_NUMBER}
+        image: pvws:${DOCKER_TAG}
+        container_name: pvws 
+        network_mode: "host"
+        healthcheck:
+            test: curl -sS http://localhost:${PORT_NUMBER}/pvws/ | grep -c "img/connected.png" > /dev/null
+            timeout: "5s"
+            retries: 10
