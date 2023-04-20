@@ -34,6 +34,9 @@ but you may prefer to build it locally as described next.
 Building
 --------
 
+Ideally, you build the binaries from sources because that way you can control
+which version of the JDK you're using.
+
 To build with maven:
 
     mvn clean package
