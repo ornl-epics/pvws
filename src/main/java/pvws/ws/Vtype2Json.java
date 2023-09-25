@@ -143,6 +143,7 @@ public class Vtype2Json
             return;
 
         g.writeStringField("units", display.getUnit());
+        g.writeStringField("description", display.getDescription());
 
         final NumberFormat format =  display.getFormat();
         if (format instanceof DecimalFormat)
