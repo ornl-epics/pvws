@@ -143,6 +143,7 @@ public class Vtype2Json
             return;
 
         g.writeStringField("units", display.getUnit());
+        g.writeStringField("description", display.getDescription());
 
         final NumberFormat format =  display.getFormat();
         if (format instanceof DecimalFormat)
@@ -175,6 +176,7 @@ public class Vtype2Json
         if (last_value == null)
         {
             // Initially, add complete metadata
+            g.writeStringField("vtype", VType.typeOf(value).getSimpleName());
             handleDisplay(g, value.getDisplay());
             // Initial severity
             g.writeStringField("severity", severity.name());
@@ -206,6 +208,7 @@ public class Vtype2Json
         if (last_value == null)
         {
             // Initially, add complete metadata
+            g.writeStringField("vtype", VType.typeOf(value).getSimpleName());
             handleDisplay(g, value.getDisplay());
             // Initial severity
             g.writeStringField("severity", severity.name());
@@ -237,6 +240,7 @@ public class Vtype2Json
         if (last_value == null)
         {
             // Initially, add complete metadata
+            g.writeStringField("vtype", VType.typeOf(value).getSimpleName());
             handleDisplay(g, value.getDisplay());
             // Initial severity
             g.writeStringField("severity", severity.name());
@@ -268,6 +272,7 @@ public class Vtype2Json
         if (last_value == null)
         {
             // Initially, add complete metadata
+            g.writeStringField("vtype", VType.typeOf(value).getSimpleName());
             g.writeArrayFieldStart("labels");
             for (final String label : value.getDisplay().getChoices())
                 g.writeString(label);
