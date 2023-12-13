@@ -99,12 +99,15 @@ When enabling write access, actual write access is still controlled
 on a per-PV basis by Channel Access or PV Access security,
 but note that the user and host seen by the CA resp. PVA server
 is tomcat and not the web client end user.
-This makes it impossible to control write access based on the actual end user
+So the IOC will always see a user "tomcat",
+which makes it impossible to control write access based on the actual end user
 via CA or PVA security.
 If you decide to allow write access, you should consider placing
 the web socket and any applications that utilize it (Display Builder Web Runtime, ...)
 behind an authentication layer (Web Proxy, ...) which will limit access
-to appropriate users.
+to appropriate users. For example, configure the proxy so that users need to "log in"
+before they can reach the displays. At thist time we have no commonly useful
+recipe for this to share, contributions are welcome.
 
 **Docker**
 
