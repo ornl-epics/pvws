@@ -227,8 +227,6 @@ public class WebSocket
     @OnOpen
     public void onOpen(final Session session, final EndpointConfig config)
     {
-        // TODO SessionManager:
-        // Periodically 'ping'?
         logger.log(Level.FINE, () -> "Opening web socket " + session.getRequestURI() + " ID " + session.getId());
         this.session = session;
         id = session.getId();

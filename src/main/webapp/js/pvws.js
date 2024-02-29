@@ -17,6 +17,20 @@ class PVWS
         this.url = url;
         this.connect_handler = connect_handler;
         this.message_handler = message_handler;
+
+        // In local tests, the web socket tends to stay open indefinitely,
+        // but in production setups with proxies etc. they often time out
+        // after about a minute of inactivity.
+        // The server side could periodically 'ping' from the SessionManager,
+        // or the client could send periodic 'echo' messages.
+        // We combine both approaches by having the client send ping requests
+        // when the connection is idle. The server will then issue the ping,
+        // and the client should return a pong (but there's no way to see that ping/pong in javascript).
+
+        // Is the connection idle? Any received message marks as non-idle.
+        this.idle = true;
+        // While connected, call checkIdleTimeout() via this timer
+        this.idle_timer = null;
         
         // Map of PVs to last known value,
         // merging metadata and value updates.
@@ -29,21 +43,48 @@ class PVWS
         this.connect_handler(false);
         console.log("Opening " + this.url);
         this.socket = new WebSocket(this.url);
-        this.socket.onopen = event => this.handleConnection();
+        this.socket.onopen = event => this.handleConnection(event);
         this.socket.onmessage = event => this.handleMessage(event.data);
         this.socket.onclose = event => this.handleClose(event);
         this.socket.onerror = event => this.handleError(event);
     }
     
-    handleConnection()
+    handleConnection(event)
     {
         console.log("Connected to " + this.url);
         this.connect_handler(true);
+
+        // Start idle check
+        if (this.idle_timer == null)
+            this.idle_timer = setInterval(() => this.checkIdleTimeout(), this.idle_check_ms);
     }
-    
+
+    checkIdleTimeout()
+    {
+        if (this.idle)
+        {
+            // console.log("Idle connection " + this.url);
+            this.ping();
+        }
+        else
+        {
+            // console.log("Active connection " + this.url);
+            // Reset to detect new messages
+            this.idle = true;
+        }
+    }
+
+    stopIdleCheck()
+    {
+        if (this.idle_timer != null)
+            clearInterval(this.idle_timer);
+        this.idle_timer = null;
+    }
+
     handleMessage(message)
     {
         // console.log("Received Message: " + message);
+        this.idle = false;
         let jm = JSON.parse(message);
         if (jm.type === "update")
         {
@@ -97,6 +138,7 @@ class PVWS
     
     handleClose(event)
     {
+        this.stopIdleCheck();
         this.connect_handler(false);
         let message = "Web socket closed (" +  event.code ;
         if (event.reason)
@@ -114,6 +156,7 @@ class PVWS
      */
     ping()
     {
+        console.log("Sending ping to " + this.url);
         this.socket.send(JSON.stringify({ type: "ping" }))
     }
     
@@ -124,7 +167,6 @@ class PVWS
     {
         if (pvs.constructor !== Array)
             pvs = [ pvs ];
-        // TODO Remember all PVs so we can re-subscribe after close/re-open
         this.socket.send(JSON.stringify({ type: "subscribe", pvs: pvs }));
     }
 
@@ -135,7 +177,6 @@ class PVWS
     {
         if (pvs.constructor !== Array)
             pvs = [ pvs ];
-        // TODO Forget PVs so we don't re-subscribe after close/re-open
         this.socket.send(JSON.stringify({ type: "clear", pvs: pvs }));
         
         // Remove entry for cleared PVs from this.values
@@ -166,9 +207,12 @@ class PVWS
      */
     close()
     {
+        this.stopIdleCheck();
         this.socket.close();
     }
 }
 
-// TODO Larger timeout for production setup
-PVWS.prototype.reconnect_ms = 5000;
+// Attempt re-connect after 10 seconds
+PVWS.prototype.reconnect_ms = 10000;
+// Perform idle check every 30 secs
+PVWS.prototype.idle_check_ms = 30000;
