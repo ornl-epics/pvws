@@ -12,6 +12,8 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
@@ -32,6 +34,7 @@ import org.epics.vtype.VFloat;
 import org.epics.vtype.VFloatArray;
 import org.epics.vtype.VNumber;
 import org.epics.vtype.VNumberArray;
+import org.epics.vtype.VShortArray;
 import org.epics.vtype.VString;
 import org.epics.vtype.VType;
 
@@ -68,15 +71,17 @@ public class Vtype2Json
         else if (value instanceof VEnum)
             handleEnum(g, (VEnum) value, last_value);
         else if (value instanceof VByteArray)
-            handleLongString(g, (VByteArray) value);
+            handleBytes(g, (VNumberArray) value, last_value);
 
         // Serialize double and float arrays as b64dbl
         else if (value instanceof VDoubleArray)
             handleDoubles(g, (VNumberArray) value, last_value);
         else if (value instanceof VFloatArray)
-            handleDoubles(g, (VNumberArray) value, last_value);
+            handleFloats(g, (VNumberArray) value, last_value);
+        else if (value instanceof VShortArray)
+        	handleShorts(g, (VNumberArray) value, last_value);
 
-        // Serialize remaining number arrays (int, short) as b64int
+        // Serialize remaining number arrays (int) as b64int
         else if (value instanceof VNumberArray)
             handleInts(g, (VNumberArray) value, last_value);
 
@@ -231,6 +236,96 @@ public class Vtype2Json
         for (int i=0; i<N; ++i)
             dblbuf.put(data.getDouble(i));
         g.writeStringField("b64dbl", Base64.getEncoder().encodeToString(buf.array()));
+    }
+
+
+    private static void handleFloats(final JsonGenerator g, final VNumberArray value, final VType last_value) throws Exception
+    {
+        final AlarmSeverity severity = value.getAlarm().getSeverity();
+        if (last_value == null)
+        {
+            // Initially, add complete metadata
+            g.writeStringField("vtype", VType.typeOf(value).getSimpleName());
+            handleDisplay(g, value.getDisplay());
+            // Initial severity
+            g.writeStringField("severity", severity.name());
+        }
+        else
+        {
+            // Add severity if it changed
+            if ((last_value instanceof VNumber)  &&
+                ((VNumber) last_value).getAlarm().getSeverity() != severity)
+                g.writeStringField("severity", severity.name());
+        }
+
+        final ListNumber data = value.getData();
+        final int N = data.size();
+        final ByteBuffer buf = ByteBuffer.allocate(N * Float.BYTES);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        final FloatBuffer fltbuf = buf.asFloatBuffer();
+        for (int i=0; i<N; ++i)
+            fltbuf.put(data.getFloat(i));
+        g.writeStringField("b64flt", Base64.getEncoder().encodeToString(buf.array()));
+    }
+
+
+    private static void handleShorts(final JsonGenerator g, final VNumberArray value, final VType last_value) throws Exception
+    {
+        final AlarmSeverity severity = value.getAlarm().getSeverity();
+        if (last_value == null)
+        {
+            // Initially, add complete metadata
+            g.writeStringField("vtype", VType.typeOf(value).getSimpleName());
+            handleDisplay(g, value.getDisplay());
+            // Initial severity
+            g.writeStringField("severity", severity.name());
+        }
+        else
+        {
+            // Add severity if it changed
+            if ((last_value instanceof VNumber)  &&
+                ((VNumber) last_value).getAlarm().getSeverity() != severity)
+                g.writeStringField("severity", severity.name());
+        }
+
+        final ListNumber data = value.getData();
+        final int N = data.size();
+        final ByteBuffer buf = ByteBuffer.allocate(N * Short.BYTES);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        final ShortBuffer srtbuf = buf.asShortBuffer();
+        for (int i=0; i<N; ++i)
+        	srtbuf.put(data.getShort(i));
+        g.writeStringField("b64srt", Base64.getEncoder().encodeToString(buf.array()));
+    }
+
+
+    private static void handleBytes(final JsonGenerator g, final VNumberArray value, final VType last_value) throws Exception
+    {
+        final AlarmSeverity severity = value.getAlarm().getSeverity();
+        if (last_value == null)
+        {
+            // Initially, add complete metadata
+            g.writeStringField("vtype", VType.typeOf(value).getSimpleName());
+            handleDisplay(g, value.getDisplay());
+            // Initial severity
+            g.writeStringField("severity", severity.name());
+        }
+        else
+        {
+            // Add severity if it changed
+            if ((last_value instanceof VNumber)  &&
+                ((VNumber) last_value).getAlarm().getSeverity() != severity)
+                g.writeStringField("severity", severity.name());
+        }
+
+        // Convert into Base64 int64 array
+        final ListNumber data = value.getData();
+        final int N = data.size();
+        final ByteBuffer buf = ByteBuffer.allocate(N * Byte.BYTES);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        for (int i=0; i<N; ++i)
+        	buf.put(data.getByte(i));
+        g.writeStringField("b64byt", Base64.getEncoder().encodeToString(buf.array()));
     }
 
 

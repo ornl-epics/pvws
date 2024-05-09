@@ -103,6 +103,22 @@ class PVWS
                 // console.log(JSON.stringify(jm.value));
                 delete jm.b64dbl;
             }
+            else if (jm.b64flt !== undefined)
+            {
+                let bytes = toByteArray(jm.b64flt);
+                jm.value = new Float32Array(bytes.buffer);
+                // Convert to plain array
+                jm.value = Array.prototype.slice.call(jm.value);
+                delete jm.b64flt;
+            }
+            else if (jm.b64srt !== undefined)
+            {
+                let bytes = toByteArray(jm.b64srt);
+                jm.value = new Int16Array(bytes.buffer);
+                // Convert to plain array
+                jm.value = Array.prototype.slice.call(jm.value);
+                delete jm.b64srt;
+            }
             else if (jm.b64int !== undefined)
             {
                 let bytes = toByteArray(jm.b64int);
@@ -110,6 +126,14 @@ class PVWS
                 // Convert to plain array, if necessary
                 jm.value = Array.prototype.slice.call(jm.value);
                 delete jm.b64int;
+            }
+            else if (jm.b64byt !== undefined)
+            {
+                let bytes = toByteArray(jm.b64byt);
+                jm.value = new Uint8Array(bytes.buffer);
+                // Convert to plain array, if necessary
+                jm.value = Array.prototype.slice.call(jm.value);
+                delete jm.b64byt;
             }
                 
             // Merge received data with last known value
