@@ -44,7 +44,7 @@ public class WebSocketPV
                                         subscription_access = new AtomicReference<>();
     private volatile boolean subscribed_for_array = false;
     private volatile VType last_value = null;
-    private volatile boolean last_readonly = true;
+    private volatile Boolean last_readonly = null;
 
     static
     {
