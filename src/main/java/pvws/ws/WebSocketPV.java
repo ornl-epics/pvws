@@ -134,9 +134,10 @@ public class WebSocketPV
             }
         }
 
-        socket.sendUpdate(name, value, last_value, last_readonly, pv.isReadonly() || !PV_WRITE_SUPPORT);
+        Boolean current_readonly = pv.isReadonly() || !PV_WRITE_SUPPORT;
+        socket.sendUpdate(name, value, last_value, last_readonly, current_readonly);
         last_value = value;
-        last_readonly = pv.isReadonly();
+        last_readonly = current_readonly;
     }
 
     /** Handle change in access permissions
@@ -144,8 +145,9 @@ public class WebSocketPV
      */
     private void handleAccessChanges(final Boolean readonly)
     {
-        socket.sendUpdate(name, last_value, last_value, last_readonly, pv.isReadonly() || !PV_WRITE_SUPPORT);
-        last_readonly = pv.isReadonly();
+        Boolean current_readonly = pv.isReadonly() || !PV_WRITE_SUPPORT;
+        socket.sendUpdate(name, last_value, last_value, last_readonly, current_readonly);
+        last_readonly = current_readonly;
     }
 
     /** @return Most recent value or null */
