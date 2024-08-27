@@ -403,7 +403,7 @@ public class WebSocket
      *  @param last_readonly Was the PV read-only?
      *  @param readonly Is the PV read-only?
      */
-    public void sendUpdate(final String name, final VType value, final VType last_value, final boolean last_readonly, final boolean readonly)
+    public void sendUpdate(final String name, final VType value, final VType last_value, final Boolean last_readonly, final Boolean readonly)
     {
         try
         {

@@ -56,7 +56,7 @@ public class Vtype2Json
      *  @return JSON text
      *  @throws Exception on error
      */
-    public static String toJson(final String name, final VType value, final VType last_value, final boolean last_readonly, final boolean readonly) throws Exception
+    public static String toJson(final String name, final VType value, final VType last_value, final Boolean last_readonly, final Boolean readonly) throws Exception
     {
         final ByteArrayOutputStream buf = new ByteArrayOutputStream();
         final JsonGenerator g = json_factory.createGenerator(buf);
@@ -94,7 +94,7 @@ public class Vtype2Json
         // null: Neither 'value' nor 'text'
 
         // Change in read/write access?
-        if (last_readonly != readonly)
+        if (last_readonly == null || !last_readonly.equals(readonly))
             g.writeBooleanField("readonly", readonly);
 
         final Time time = Time.timeOf(value);
@@ -113,10 +113,20 @@ public class Vtype2Json
     private static void handleString(final JsonGenerator g, final VString value, final VType last_value) throws Exception
     {
         final AlarmSeverity severity = value.getAlarm().getSeverity();
-        if (last_value == null  ||
-            (last_value instanceof VString  &&
-             ((VString) last_value).getAlarm().getSeverity() != severity))
-            g.writeStringField("severity", value.getAlarm().getSeverity().name());
+        if (last_value == null)
+        {
+            // Initially, add complete metadata
+            g.writeStringField("vtype", VType.typeOf(value).getSimpleName());
+            // Initial severity
+            g.writeStringField("severity", severity.name());
+        }
+        else
+        {
+            // Add severity if it changed
+            if ((last_value instanceof VString) &&
+                 ((VString) last_value).getAlarm().getSeverity() != severity)
+                g.writeStringField("severity", severity.name());
+        }
 
         g.writeStringField("text", value.getValue());
     }
