@@ -9,7 +9,7 @@ FROM maven:3.8.7-eclipse-temurin-17 as maven_builder
 COPY --from=source_fetch /pvws /pvws
 RUN cd /pvws && mvn clean package 
 
-FROM tomcat:9.0-jdk17
+FROM tomcat:9.0-jdk17-corretto
 
 ARG PORT_NUMBER=8080
 COPY --from=maven_builder /pvws/target/pvws.war ${CATALINA_HOME}/webapps
