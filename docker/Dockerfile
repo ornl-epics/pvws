@@ -1,6 +1,6 @@
 FROM alpine/git:latest as source_fetch
 
-RUN git clone https://github.com/ornl-epics/pvws.git /pvws
+RUN git clone https://github.com/DiamondLightSource/pvws.git /pvws
 ARG GIT_TAG=main
 RUN cd /pvws && git checkout ${GIT_TAG}
 
