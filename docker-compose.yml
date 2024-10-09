@@ -7,7 +7,7 @@ services:
             args:
                 GIT_TAG: ${GIT_TAG}
                 PORT_NUMBER: ${PORT_NUMBER}
-        image: pvws:${DOCKER_TAG}
+        image: gcr.io/diamond-privreg/pvws:${DOCKER_TAG}
         container_name: pvws 
         network_mode: "host"
         healthcheck:
