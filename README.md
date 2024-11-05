@@ -66,7 +66,7 @@ The PV web socket supports the PV names handled by core-pv, which include:
 
  * `ca://NameOfPV` for Channel Access
  * `pva://NameOfPV` for PV Access
- * `sim://NameOfPV` for simulated channels that may be useful for testing
+ * `sim://NameOfPV` for [simulated channels](https://control-system-studio.readthedocs.io/en/latest/core/pv/doc/index.html#simulated) that may be useful for testing
  * `NameOfPV` uses the default PV type, see `PV_DEFAULT_TYPE` below
  
 
