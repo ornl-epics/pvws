@@ -109,6 +109,32 @@ to appropriate users. For example, configure the proxy so that users need to "lo
 before they can reach the displays. At thist time we have no commonly useful
 recipe for this to share, contributions are welcome.
 
+<details>
+<summary>Note: increasing maximum message size for large PV subscribe requests</summary>
+
+PVWS may hit into the default message size of 8192 documented in the [Tomcat documentation](https://tomcat.apache.org/tomcat-9.0-doc/web-socket-howto.html) when subscribing to a large list of PVs.
+
+To increase this, you need to set a Servlet context initialization parameter(`org.apache.tomcat.websocket.textBufferSize`) in `<wherever tomcat is installed>/webapps/pvws/web.xml` (note this has to be done after PVWS' first startup) like so: 
+
+```xml 
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+  <display-name>pvws</display-name>
+  <!-- other parameters, 404 page etc -->
+  <context-param>
+        <param-name>org.apache.tomcat.websocket.textBufferSize</param-name>
+        <param-value>131072</param-value>
+  </context-param>
+</web-app>
+```
+
+In the above example we have upped the limit from 8192 to 131072 bytes per message. This number * the number of active connections your websocket can have (usually this is set in the `Connector` part of `server.xml`) must be less than the maximum size of the memory pool (`-Xmx` in the startup options, default is `256Mb`) otherwise Tomcat will throw a `java.lang.OutOfMemoryError`. 
+
+Obviously this is only needed for subscription messages that contain lots of PVs, but if you don't want to change the tomcat settings you can just split the subscription up into smaller groups.
+
+</details>
+<br>
+
 **Docker**
 
 To run docker container (use -d option to run in detached mode):
