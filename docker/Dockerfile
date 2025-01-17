@@ -17,3 +17,6 @@ COPY ./setenv.sh ${CATALINA_HOME}/bin
 RUN sed -i.bak -e "s|Connector port=\"8080\"|Connector port=\"${PORT_NUMBER}\"|g" \
   -e 's|Server port="8005" shutdown="SHUTDOWN"|Server port="-1" shutdown="SHUTDOWN"|g' \
    ${CATALINA_HOME}/conf/server.xml
+RUN sed -i s/1/0/ /etc/yum/pluginconf.d/priorities.conf
+RUN yum -y update java-17-amazon-corretto-devel
+ENV JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto.x86_64
