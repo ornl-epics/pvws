@@ -83,6 +83,7 @@ Web Socket Settings:
 
 Channel Access Settings:
  * `EPICS_CA_ADDR_LIST`: CA address list.
+ * `EPICS_CA_AUTO_ADDR_LIST`: 'YES' (default) or 'NO'.
  * `EPICS_CA_MAX_ARRAY_BYTES`: CA array size.
 
 PV Access Settings:
