@@ -37,6 +37,9 @@ import org.phoebus.pv.PV;
 import org.phoebus.pv.PVPool;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import pvws.PVWebSocketContext;
 import pvws.ws.WebSocket;
@@ -55,7 +58,11 @@ public class PVGetServlet extends JSONServlet {
     /**
      * Handles GET requests to /pvget and writes the response in JSON format.
      * 
-     * @param request The HTTP request containing the "pv" parameter.
+     * The method supports two input formats:
+     * - A single PV name passed directly via the "pv" parameter.
+     * - Multiple PV names passed as a JSON array of strings via the "pv" parameter.
+     * 
+     * @param request The HTTP request containing the "pv" parameter specifying one or more PVs.
      * @param g       The JsonGenerator used to write the JSON response.
      * @throws IOException If an I/O error occurs while writing the JSON response.
      */
@@ -63,34 +70,47 @@ public class PVGetServlet extends JSONServlet {
     protected void writeJson(final HttpServletRequest request, final JsonGenerator g) throws IOException
     {
         // Retrieve the "pv" parameter from the request, which specifies the PV(s) to fetch.
-        String name = request.getParameter("pv");
+        String pvParam = request.getParameter("pv");
 
         // If no PVs are specified, return an error response.
-        if (name == null || name.isEmpty()) {
+        if (pvParam == null || pvParam.isEmpty()) {
             g.writeStartObject();
-            g.writeStringField("name", name);
+            g.writeStringField("name", pvParam);
             g.writeBooleanField("success", false);
             g.writeStringField("message", "No PVs have been specified.");
             g.writeEndObject();
             return;
         }
-        
-        // Split the "pv" parameter by commas to handle multiple PVs.
-        String[] pvs = name.split(",");
-        for (int i = 0; i < pvs.length; i++) {
-            pvs[i] = pvs[i].trim(); // Trim whitespace around each PV name
+
+        List<String> pvs = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper(json_factory);
+
+        try {
+            // Try parsing as JSON array
+            JsonNode node = mapper.readTree(pvParam);
+            if (node.isArray()) {
+                for (JsonNode item : node) {
+                    pvs.add(item.asText());
+                }
+            } else {
+                // Not an array, assume it's a single PV name
+                pvs.add(pvParam);
+            }
+        } catch (JsonProcessingException e) {
+            // Invalid JSON, treat it as a single PV name
+            pvs.add(pvParam);
         }
         
         // Handle single PV request.
-        if (pvs.length == 1) {
+        if (pvs.size() == 1) {
             try {
                 // Generate a JSON object for the single PV and write it directly to the response.
-                String jsonObject = generateJsonForPV(pvs[0]);
+                String jsonObject = generateJsonForPV(pvs.get(0));
                 g.writeRawValue(jsonObject); // Write raw JSON string
             } catch (Exception e) {
                 // If an exception occurs, return an error response for the single PV.
                 g.writeStartObject();
-                g.writeStringField("name", pvs[0]);
+                g.writeStringField("name", pvs.get(0));
                 g.writeBooleanField("success", false);
                 g.writeStringField("message", "An exception occurs when fetching or formatting PV value.");
                 g.writeEndObject();
@@ -104,10 +124,9 @@ public class PVGetServlet extends JSONServlet {
             List<PVTask> pvTasks = new ArrayList<>();
 
             // Submit tasks to the thread pool to generate JSON for each PV concurrently.
-            for (int i = 0; i < pvs.length; i++) {
-                int index = i;
-                Future<String> future = executorService.submit(() -> generateJsonForPV(pvs[index]));
-                pvTasks.add(new PVTask(pvs[index], future));
+            for (String pv : pvs) {
+                Future<String> future = executorService.submit(() -> generateJsonForPV(pv));
+                pvTasks.add(new PVTask(pv, future));
             }
 
             g.writeStartArray();
