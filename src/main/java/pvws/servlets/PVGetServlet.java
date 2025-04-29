@@ -342,7 +342,9 @@ public class PVGetServlet extends JSONServlet {
             try {
                 // Attempt to asynchronously read the value from the PV with a timeout of 5000ms
                 value = pv.asyncRead().get(5000, TimeUnit.MILLISECONDS);
-                break; // Exit the loop if the read is successful
+                // The value may be null for simulated PVs
+                if (value != null)
+                    break; // Exit the loop if the read is successful and value is not null
             } catch (Exception e) {
                 value = null; // Reset value on failure
             }
