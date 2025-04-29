@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -133,10 +134,17 @@ public class PVGetServlet extends JSONServlet {
             for (PVTask pvTask : pvTasks) {
                 try {
                     // Retrieve the JSON result for the PV from the Future and write it to the response.
-                    String jsonObject = pvTask.future.get();
+                    String jsonObject = pvTask.future.get(5000, TimeUnit.MILLISECONDS);
                     g.writeRawValue(jsonObject); // Write raw JSON string
+                } catch (TimeoutException e) {
+                    // Handle case where generating JSON for this PV timed out.
+                    g.writeStartObject();
+                    g.writeStringField("name", pvTask.pvName);
+                    g.writeBooleanField("success", false);
+                    g.writeStringField("message", "Timeout while generating JSON for the PV.");
+                    g.writeEndObject();
                 } catch (InterruptedException | ExecutionException e) {
-                    // If an exception occurs, return an error response for the specific PV.
+                    // Handle exceptions thrown during task execution.
                     g.writeStartObject();
                     g.writeStringField("name", pvTask.pvName);
                     g.writeBooleanField("success", false);
