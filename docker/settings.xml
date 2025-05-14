@@ -1,0 +1,16 @@
+<settings>
+  <servers>
+    <server>
+      <id>github</id>
+      <username>GITHUB_USERNAME</username>
+      <password>GITHUB_TOKEN</password>
+    </server>
+  </servers>
+  <mirrors>
+    <mirror>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/fermi-ad/phoebus-fnal</url>
+      <mirrorOf>*</mirrorOf>
+    </mirror>
+  </mirrors>
+</settings>

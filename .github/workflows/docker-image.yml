@@ -2,14 +2,28 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ fnal ]
   pull_request:
-    branches: [ main ]
+    branches: [ fnal ]
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker compose build
+      - uses: actions/checkout@v3
+
+      - name: Set up environment variables
+        run: |
+          echo "GITHUB_USERNAME=${{ github.actor }}" >> $GITHUB_ENV
+          echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Build using Docker Compose
+        run: |
+          docker compose build \
+            --build-arg GITHUB_USERNAME=$GITHUB_USERNAME \
+            --build-arg GITHUB_TOKEN=$GITHUB_TOKEN
+
