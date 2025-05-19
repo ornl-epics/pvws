@@ -1,0 +1,17 @@
+replicaCount: 2
+
+ingress:
+  hostname: pvws-public.diamond.ac.uk
+env: 
+  gateway: 172.23.169.186
+  type: public
+
+image:
+  tag: "1.2"
+
+securityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true

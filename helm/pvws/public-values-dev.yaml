@@ -1,0 +1,7 @@
+replicaCount: 1
+
+ingress:
+  hostname: pvws-test.diamond.ac.uk
+
+env: 
+  gateway: 172.23.168.186
