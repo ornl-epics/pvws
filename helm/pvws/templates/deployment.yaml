@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: pvws
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: pvws
+  template:
+    metadata:
+      labels:
+        app: pvws
+    spec:
+      securityContext:
+        runAsUser: {{ .Values.securityContext.runAsUser}}
+        runAsGroup: {{ .Values.securityContext.runAsGroup}}
+      {{- if eq .Values.env.type "public" }}
+      initContainers:
+      - name: init-pvws
+        securityContext:
+          runAsNonRoot: {{ .Values.securityContext.runAsNonRoot}}
+          allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation}}
+          readOnlyRootFilesystem: {{ .Values.securityContext.readOnlyRootFilesystem}}
+        # Load image and copy config to a writeable volume
+        image: "gcr.io/diamond-privreg/pvws:{{ .Values.image.tag }}"
+        imagePullPolicy: Always
+        command: ["/bin/sh", "-c", "cp -a /usr/local/tomcat/* /tomcat/"]
+        volumeMounts:
+        - name: catalina-home
+          mountPath: /tomcat
+      {{- end }}
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "gcr.io/diamond-privreg/pvws:{{ .Values.image.tag }}"
+        imagePullPolicy: Always
+        securityContext:
+          runAsNonRoot: {{ .Values.securityContext.runAsNonRoot}}
+          allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation}}
+          readOnlyRootFilesystem: {{ .Values.securityContext.readOnlyRootFilesystem}}
+        ports:
+        - containerPort: 8080
+        {{- if eq .Values.env.type "public" }}
+        volumeMounts:
+        - name: catalina-home
+          mountPath: /usr/local/tomcat
+        {{- end }}
+        env:
+          # Give PVWS read-only access to EPICS via the gateway.
+          - name: EPICS_CA_ADDR_LIST
+            value: {{ .Values.env.gateway}}
+          - name: PV_DEFAULT_TYPE
+            value: "ca"
+          - name: PV_THROTTLE_MS
+            value: "1000"
+          - name: PV_ARRAY_THROTTLE_MS
+            value: "10000"
+          - name: PV_WRITE_SUPPORT
+            value: "false"
+        resources:
+          limits:
+            cpu: 2
+            memory: 2Gi
+          requests:
+            cpu: 1
+            memory: 2Gi
+      {{- if eq .Values.env.type "public" }}
+      volumes:
+      - name: catalina-home
+        emptyDir: {}
+      {{- end }}

@@ -1,0 +1,19 @@
+replicaCount: 8
+namespace: pvws
+
+ingress:
+  hostname: pvws.diamond.ac.uk
+
+env: 
+  gateway: 172.23.240.13
+  type: none
+
+image:
+  tag: "1.2"
+
+securityContext:
+  runAsUser: 0
+  runAsGroup: 0
+  runAsNonRoot: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
