@@ -68,7 +68,7 @@ The PV web socket supports the PV names handled by core-pv, which include:
  * `pva://NameOfPV` for PV Access
  * `sim://NameOfPV` for [simulated channels](https://control-system-studio.readthedocs.io/en/latest/core/pv/doc/index.html#simulated) that may be useful for testing
  * `NameOfPV` uses the default PV type, see `PV_DEFAULT_TYPE` below
- 
+
 
 Running under Tomcat
 --------------------
@@ -91,7 +91,7 @@ PV Access Settings:
  * `EPICS_PVA_AUTO_ADDR_LIST`: 'YES' (default) or 'NO'.
  * `EPICS_PVA_BROADCAST_PORT`: Port used for name searches, defaults to 5076.
  * `EPICS_PVA_NAME_SERVERS`: Space-separated list of TCP name servers, provided as IP address followed by optional ":port". Client will connect to each address and send name searches before using the EPICS_PVA_ADDR_LIST for UDP searches. Set EPICS_PVA_ADDR_LIST to empty and EPICS_PVA_AUTO_ADDR_LIST=NO to use only the TCP name servers and avoid all UDP traffic.
- 
+
 Place `pvws.war` in `$CATALINA_HOME/webapps`.
 You can check the tomcat log for the effective values of various configuration settings
 since they will be logged when the context starts up.
@@ -107,7 +107,7 @@ If you decide to allow write access, you should consider placing
 the web socket and any applications that utilize it (Display Builder Web Runtime, ...)
 behind an authentication layer (Web Proxy, ...) which will limit access
 to appropriate users. For example, configure the proxy so that users need to "log in"
-before they can reach the displays. At thist time we have no commonly useful
+before they can reach the displays. At this time we have no commonly useful
 recipe for this to share, contributions are welcome.
 
 <details>
@@ -115,9 +115,9 @@ recipe for this to share, contributions are welcome.
 
 PVWS may hit into the default message size of 8192 documented in the [Tomcat documentation](https://tomcat.apache.org/tomcat-9.0-doc/web-socket-howto.html) when subscribing to a large list of PVs.
 
-To increase this, you need to set a Servlet context initialization parameter(`org.apache.tomcat.websocket.textBufferSize`) in `<wherever tomcat is installed>/webapps/pvws/web.xml` (note this has to be done after PVWS' first startup) like so: 
+To increase this, you need to set a Servlet context initialization parameter(`org.apache.tomcat.websocket.textBufferSize`) in `<wherever tomcat is installed>/webapps/pvws/web.xml` (note this has to be done after PVWS' first startup) like so:
 
-```xml 
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app>
   <display-name>pvws</display-name>
@@ -129,7 +129,7 @@ To increase this, you need to set a Servlet context initialization parameter(`or
 </web-app>
 ```
 
-In the above example we have upped the limit from 8192 to 131072 bytes per message. This number * the number of active connections your websocket can have (usually this is set in the `Connector` part of `server.xml`) must be less than the maximum size of the memory pool (`-Xmx` in the startup options, default is `256Mb`) otherwise Tomcat will throw a `java.lang.OutOfMemoryError`. 
+In the above example we have upped the limit from 8192 to 131072 bytes per message. This number * the number of active connections your websocket can have (usually this is set in the `Connector` part of `server.xml`) must be less than the maximum size of the memory pool (`-Xmx` in the startup options, default is `256Mb`) otherwise Tomcat will throw a `java.lang.OutOfMemoryError`.
 
 Obviously this is only needed for subscription messages that contain lots of PVs, but if you don't want to change the tomcat settings you can just split the subscription up into smaller groups.
 
@@ -211,7 +211,7 @@ The web socket will now send 'update' replies which should resemble
     "severity": "MAJOR",
     "value": 4.755282581475768
     }
-    
+
 Note how the web socket sends the complete meta data (units etc.)
 just once. The following updates then only contain the changed "value", timestamp "seconds" and "nanos",
 and maybe alarm "severity".
