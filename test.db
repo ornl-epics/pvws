@@ -1,0 +1,16 @@
+record(calc, "toggle_calc")
+{
+    field(SCAN, "1 second")
+    field(INPA, "toggle_calc")
+    field(CALC, "A>0?0:A+1")
+    field(FLNK, "toggle")
+}
+
+record(bi, "toggle")
+{
+    field(INP,  "toggle_calc")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(ZSV,  "MINOR")
+}
+
