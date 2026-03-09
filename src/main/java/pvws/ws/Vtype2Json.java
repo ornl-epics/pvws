@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2022 UT-Battelle, LLC.
+ * Copyright (c) 2019-2026 UT-Battelle, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -389,8 +389,8 @@ public class Vtype2Json
         else
         {
             // Add severity if it changed
-            if ((last_value instanceof VNumber)  &&
-                ((VNumber) last_value).getAlarm().getSeverity() != severity)
+            if ((last_value instanceof VEnum lve)  &&
+                (lve.getAlarm().getSeverity() != severity))
                 g.writeStringField("severity", severity.name());
         }
 
