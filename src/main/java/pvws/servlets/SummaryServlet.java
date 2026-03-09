@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 UT-Battelle, LLC.
+ * Copyright (c) 2020-2026 UT-Battelle, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -50,10 +50,10 @@ public class SummaryServlet extends JSONServlet
             {
                 ++pvs;
                 final VType value = pv.getLastValue();
-                if (value instanceof Array)
-                {
+                if (value instanceof Array array)
+                {   // For arrays, summarize size
                     ++arrays;
-                    final ListInteger sizes = ((Array) value).getSizes();
+                    final ListInteger sizes = array.getSizes();
                     for (int i=0; i<sizes.size(); ++i)
                         max_size = Math.max(max_size,  sizes.getInt(i));
                 }

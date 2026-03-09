@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 UT-Battelle, LLC.
+ * Copyright (c) 2019-2026 UT-Battelle, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -64,9 +64,9 @@ public class SocketServlet extends JSONServlet
                 g.writeStringField("name", pv.getName());
                 // Add representation of value.
                 final VType value = pv.getLastValue();
-                if (value instanceof Array)
+                if (value instanceof Array array)
                 {   // For arrays, show size, not actual elements
-                    g.writeStringField("value", value.getClass().getName() + ", size " + ((Array) value).getSizes());
+                    g.writeStringField("value", value.getClass().getName() + ", size " + array.getSizes());
                 }
                 else
                     g.writeStringField("value", Objects.toString(pv.getLastValue()));

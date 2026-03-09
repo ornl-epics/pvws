@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2022 UT-Battelle, LLC.
+ * Copyright (c) 2019-2026 UT-Battelle, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the LICENSE
  * which accompanies this distribution
@@ -105,7 +105,7 @@ public class WebSocketPV
      */
     private void handleUpdates(final VType value)
     {
-        if (value instanceof Array  && !subscribed_for_array)
+        if (value instanceof Array array && !subscribed_for_array)
         {
             // If the data turns out to be array values,
             // re-subscribe at a (slower) 'array' rate.
@@ -114,7 +114,6 @@ public class WebSocketPV
             // so we won't be able to cancel that subscription right away.
             // Instead, we'll create a separate 'array_subscription',
             // and in a later update we then dispose the initial subscription.
-            final Array array = (Array) value;
             logger.log(Level.FINE, () -> "Re-subscribing to array " + name + ", " + array.getSizes());
 
             subscribed_for_array = true;
